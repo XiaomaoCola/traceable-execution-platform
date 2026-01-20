@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: traceable-postgres
+    environment:
+      POSTGRES_DB: traceable_db
+      POSTGRES_USER: traceable_user
+      POSTGRES_PASSWORD: traceable_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U traceable_user -d traceable_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: traceable-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: traceable-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://traceable_user:traceable_pass@postgres:5432/traceable_db
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-secret-key-change-in-production
+      - ENVIRONMENT=development
+      - ARTIFACT_STORAGE_TYPE=local
+      - ARTIFACT_STORAGE_PATH=/app/data/artifacts
+      - AUDIT_LOG_PATH=/app/data/audit
+    volumes:
+      - ../backend:/app/backend
+      - ../scripts:/app/scripts
+      - ../script_specs:/app/script_specs
+      - artifact_data:/app/data/artifacts
+      - audit_data:/app/data/audit
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  artifact_data:
+  audit_data:
