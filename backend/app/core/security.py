@@ -11,6 +11,11 @@ from backend.app.core.config import settings
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# CryptContext 可以看作为「密码策略管理器」。
+# schemes=["bcrypt"]的意思是：系统里所有密码，都按 bcrypt 这种方式来算。
+# bcrypt放在 list 里的原因是：
+# 它支持多算法共存，比如将来改成schemes=["argon2", "bcrypt"]的话，新用户用 argon2加密，但是登录时候自动识别。
+# deprecated="auto"的意思是：  “过期的算法”未来仍然可以用。
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

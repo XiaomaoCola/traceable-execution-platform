@@ -23,6 +23,11 @@ async def authenticate_user(db: Session, username: str, password: str) -> User |
         User object if authentication successful, None otherwise
     """
     user = db.query(User).filter(User.username == username).first()
+    # User 是一个 ORM 模型，ORM 模型 就是 数据库表在 Python 里的“翻译版本”。
+    # db.query(User)的意思是：我要查 user 这张表。
+    # User.username意思是：User表里的 username 这一列。
+    # User.username == username，后面的username是传入的参数，假如是"bob"的话，找到username是bob的这一行。
+    # .first的意思是：目前db.query(User).filter(User.username == username)已经给出一堆满足条件的行了，.first取里面第一个。
 
     if not user:
         # Log failed login attempt
