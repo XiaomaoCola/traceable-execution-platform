@@ -51,9 +51,16 @@ async def upload_artifact(
         )
 
     # Check file size limit
-    file.seek(0, 2)  # Seek to end
+    file.seek(0, 2)
+    # 这里的概念叫做文件指针（file pointer）。
+    # 当打开一个文件时，不管是 Python、C、Java，系统都会偷偷做一件事，给这个文件创建一个“指针”，默认在 0。
+    # file.seek(offset, whence)意思是：从 whence 指定的位置开始，往后移动 offset 个字节。
+    # whence为0，表示从文件开头开始。whence为1，表示从当前位置。whence为2，表示从文件末尾。
+    # file.seek(0, 2)表示：从文件末尾开始，移动 0 个字节。
     file_size = file.tell()
-    file.seek(0)  # Reset to beginning
+    # file.tell() 的意思是： 现在读到第几个字节。
+    file.seek(0)
+    # Reset to beginning
 
     max_size_bytes = settings.max_artifact_size_mb * 1024 * 1024
     if file_size > max_size_bytes:
