@@ -27,6 +27,8 @@ class User(Base, IDMixin, TimestampMixin):
 
     # Relationships
     tickets = relationship("Ticket", back_populates="creator", foreign_keys="Ticket.created_by_id")
+    # 这行代码不会在数据库里新增任何一列，它只是 ORM 的“使用便利层”。
+    # back_populates="creator" ：这里是双向同步的关键。说明Ticket 里有一个属性叫 creator，它和这里的 tickets 是一对。
     runs = relationship("Run", back_populates="executor", foreign_keys="Run.executed_by_id")
 
     def __repr__(self):

@@ -49,5 +49,6 @@ class IDMixin:
     # Integer：这一列是整数。
     # primary_key=True：这一列是主键。
     # index=True：给这列建索引（让按 id 查更快）
+    # index 是用在“表里的某一列”上的，如果这一列有 index，数据库就可以通过这一列，快速定位到某一行（或几行）。
     # autoincrement=True：自动递增（数据库自己填 1、2、3…）。
     # 总体来看：任何继承了 IDMixin 的表，都会自动拥有一列 id（整数、唯一、查询很快、自动增长）。
