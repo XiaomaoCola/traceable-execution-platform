@@ -30,6 +30,23 @@ async def create_run(
     Raises:
         HTTPException: If ticket not found or validation fails
     """
+    # TODO（权限与状态校验待完善）:
+    # 当前仅对 ACTION 类型的 run 做了权限与状态限制，
+    # 其他 run 类型（如 proof / precheck 等）几乎没有授权校验。
+    #
+    # 存在的问题：
+    # - 任意已登录用户只要知道 ticket_id，就可能为不属于自己的工单创建 run
+    # - 非 ACTION 的 run 仍会修改 ticket.status（如改为 RUNNING），
+    #   可能导致工单流程被越权或异常推进
+    #
+    # 后续需要补充：
+    # - 明确哪些用户可以对某个 ticket 创建 run（owner / assignee / admin / 同租户等）
+    # - 按 run_type 定义不同的创建权限和 ticket 状态前置条件
+    # - 明确哪些 run 类型允许/不允许修改 ticket 的主状态
+    #
+    # 目标：
+    # 防止越权创建 run（IDOR），并避免非执行类 run 干扰工单主流程
+
     # Verify ticket exists
     ticket = db.query(Ticket).filter(Ticket.id == run_in.ticket_id).first()
     if not ticket:
