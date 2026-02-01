@@ -60,10 +60,26 @@ class AuditLogger:
         Args:
             event: Audit event to log
         """
+        # TODO:
+        # This method currently performs synchronous file I/O inside an async context,
+        # which may block the event loop under high throughput.
+        #
+        # Future improvements:
+        # - Move audit writes to a background worker (queue + worker thread/process)
+        # - Or offload file I/O to a thread pool (asyncio.to_thread)
+        # - Consider batching writes and/or using a dedicated append-only log service
+        #   when audit volume grows.
+        #
+        # Rationale:
+        # Audit logging must remain append-only and reliable, but should not impact
+        # request latency or event loop responsiveness.
+
         # Write to JSON Lines file (for machine parsing)
         json_log_file = self._get_log_file_path("audit")
         with open(json_log_file, "a", encoding="utf-8") as f:
             f.write(event.model_dump_json() + "\n")
+            # AuditEvent 继承了 BaseModel，所以可以用.model_dump_json()。
+            # 所以这边的意思是：把这个event 变成 JSON 字符串，然后写入文件。
 
         # Also write human-readable format
         text_log_file = self._get_log_file_path("audit_readable")
