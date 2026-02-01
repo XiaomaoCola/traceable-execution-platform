@@ -39,6 +39,8 @@ class Ticket(Base, IDMixin, TimestampMixin):
 
     # Related asset (e.g., which switch/router this ticket is about)
     asset_id = Column(Integer, ForeignKey("assets.id"), nullable=True)
+    # ForeignKey 写在 Ticket，而不是 Asset的原因是：
+    # 一对多，即，一个 Asset对应多个 Ticket。多的一方，持有外键。
 
     # Creator
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
