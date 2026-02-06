@@ -2,6 +2,8 @@
 
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from backend.app.models.user import User
 from backend.app.schemas.user import UserCreate
@@ -10,7 +12,8 @@ from backend.app.audit.events import AuditEvent, AuditEventType
 from backend.app.audit.audit_logger import audit_logger
 
 
-async def authenticate_user(db: Session, username: str, password: str) -> User | None:
+# 原来写的是async def authenticate_user(db: Session, username: str, password: str) -> User | None:
+async def authenticate_user(db: AsyncSession, username: str, password: str) -> User | None:
     """
     Authenticate a user by username and password.
 
@@ -22,7 +25,12 @@ async def authenticate_user(db: Session, username: str, password: str) -> User |
     Returns:
         User object if authentication successful, None otherwise
     """
-    user = db.query(User).filter(User.username == username).first()
+    result = await db.execute(
+        select(User).where(User.username == username)
+    )
+    user = result.scalar_one_or_none()
+    # 原来版本是 user = db.query(User).filter(User.username == username).first()
+    # 下面是原来版本的解释：
     # User 是一个 ORM 模型，ORM 模型 就是 数据库表在 Python 里的“翻译版本”。
     # db.query(User)的意思是：我要查 user 这张表。
     # User.username意思是：User表里的 username 这一列。
@@ -75,7 +83,7 @@ async def authenticate_user(db: Session, username: str, password: str) -> User |
     return user
 
 
-async def create_user(db: Session, user_in: UserCreate, creator: User | None = None) -> User:
+async def create_user(db: AsyncSession, user_in: UserCreate, creator: User | None = None) -> User:
     """
     Create a new user.
 
@@ -88,7 +96,11 @@ async def create_user(db: Session, user_in: UserCreate, creator: User | None = N
         Created user object
     """
     # Check if username already exists
-    existing_user = db.query(User).filter(User.username == user_in.username).first()
+    # 下面几行原来写的是existing_user = db.query(User).filter(User.username == user_in.username).first()
+    result = await db.execute(
+        select(User).where(User.username == user_in.username)
+    )
+    existing_user = result.scalar_one_or_none()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -96,7 +108,11 @@ async def create_user(db: Session, user_in: UserCreate, creator: User | None = N
         )
 
     # Check if email already exists
-    existing_email = db.query(User).filter(User.email == user_in.email).first()
+    # 原来是existing_email = db.query(User).filter(User.email == user_in.email).first()
+    result = await db.execute(
+        select(User).where(User.email == user_in.email)
+    )
+    existing_email = result.scalar_one_or_none()
     if existing_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -113,8 +129,10 @@ async def create_user(db: Session, user_in: UserCreate, creator: User | None = N
     )
 
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    # db.commit()
+    # db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
 
     # Log user creation
     await audit_logger.log(AuditEvent(
