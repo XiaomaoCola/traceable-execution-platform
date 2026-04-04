@@ -41,3 +41,11 @@ class TicketResponse(TicketBase):
 class TicketApprove(BaseModel):
     """Schema for approving a ticket."""
     approved: bool = True
+
+# 新增
+class PaginatedTicketResponse(BaseModel):
+    data: list[TicketResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

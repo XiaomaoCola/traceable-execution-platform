@@ -36,3 +36,11 @@ class ArtifactUploadResponse(BaseModel):
     """Schema for artifact upload response."""
     artifact: ArtifactResponse
     message: str = "Artifact uploaded successfully"
+
+#新增
+class PaginatedArtifactResponse(BaseModel):
+    data: list[ArtifactResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

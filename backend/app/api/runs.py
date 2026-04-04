@@ -2,11 +2,18 @@
 
 from fastapi import APIRouter, HTTPException, status, BackgroundTasks
 
-from backend.app.schemas.run import RunCreate, RunResponse, RunDetailResponse
+from backend.app.core.pagination import apply_pagination_and_sort, build_paginated_response
+from backend.app.schemas.run import RunCreate, RunResponse, RunDetailResponse, PaginatedRunResponse
 from backend.app.core.dependencies import DatabaseSession, CurrentUser
 from backend.app.services.run_service import create_run
 from backend.app.services.runner import run_executor
 from backend.app.models.run import Run
+
+
+# 新增
+from fastapi import Query
+from sqlalchemy import select, func
+from backend.app.models.ticket import Ticket
 
 
 router = APIRouter(prefix="/runs", tags=["Runs"])
@@ -33,31 +40,39 @@ async def create_new_run(
     return run
 
 
-@router.get("", response_model=list[RunResponse])
+# 修改
+@router.get("", response_model=PaginatedRunResponse)
 async def list_runs(
     db: DatabaseSession,
     current_user: CurrentUser,
     ticket_id: int | None = None,
-    skip: int = 0,
-    limit: int = 100
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    order_by: str = Query(default="created_at"),  # 【新增】
+    order: str = Query(default="desc")            # 【新增】
 ):
     """
-    List runs.
+    List runs with pagination.
 
     Optionally filter by ticket_id.
     """
-    query = db.query(Run)
+    query = select(Run)
 
     if ticket_id:
-        query = query.filter(Run.ticket_id == ticket_id)
+        query = query.where(Run.ticket_id == ticket_id)
 
-    # Non-admins can only see runs from their own tickets
     if not current_user.is_admin:
-        from backend.app.models.ticket import Ticket
-        query = query.join(Ticket).filter(Ticket.created_by_id == current_user.id)
+        query = query.join(Ticket).where(Ticket.created_by_id == current_user.id)
 
-    runs = query.order_by(Run.created_at.desc()).offset(skip).limit(limit).all()
-    return runs
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_result.scalar()
+
+    result = await db.execute(
+        apply_pagination_and_sort(query, Run, page, page_size, order_by, order)
+    )
+    runs = result.scalars().all()
+    return build_paginated_response(runs, RunResponse, total, page, page_size)
+
 
 
 @router.get("/{run_id}", response_model=RunDetailResponse)
@@ -69,7 +84,8 @@ async def get_run(
     """
     Get run details including logs.
     """
-    run = db.query(Run).filter(Run.id == run_id).first()
+    result = await db.execute(select(Run).where(Run.id == run_id))
+    run = result.scalar_one_or_none()
 
     if not run:
         raise HTTPException(
@@ -79,7 +95,10 @@ async def get_run(
 
     # Check permissions
     if not current_user.is_admin:
-        if run.ticket.created_by_id != current_user.id:
+        from backend.app.models.ticket import Ticket
+        ticket_result = await db.execute(select(Ticket).where(Ticket.id == run.ticket_id))
+        ticket = ticket_result.scalar_one_or_none()
+        if ticket.created_by_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not authorized to view this run"

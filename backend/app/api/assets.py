@@ -1,13 +1,13 @@
 """Asset management endpoints."""
 
-from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, HTTPException, status, Query
+from sqlalchemy import select, func
 
-from backend.app.schemas.asset import AssetCreate, AssetUpdate, AssetResponse
+from backend.app.schemas.asset import AssetCreate, AssetUpdate, AssetResponse, PaginatedAssetResponse
 from backend.app.core.dependencies import DatabaseSession, CurrentUser
 from backend.app.services.asset_service import create_asset, update_asset
 from backend.app.models.asset import Asset
-
+from backend.app.core.pagination import apply_pagination_and_sort, build_paginated_response
 
 router = APIRouter(prefix="/assets", tags=["Assets"])
 
@@ -22,24 +22,32 @@ async def create_new_asset(
     asset = await create_asset(db, asset_in, current_user)
     return asset
 
-
-@router.get("", response_model=list[AssetResponse])
+#修改
+@router.get("", response_model=PaginatedAssetResponse)
 async def list_assets(
     db: DatabaseSession,
     current_user: CurrentUser,
     asset_type: str | None = None,
-    skip: int = 0,
-    limit: int = 100
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    order_by: str = Query(default="created_at"),  # 【新增】
+    order: str = Query(default="desc")            # 【新增】
 ):
-    """List assets."""
+    """List assets with pagination."""
     query = select(Asset)
 
     if asset_type:
         query = query.where(Asset.asset_type == asset_type)
 
-    result = await db.execute(query.offset(skip).limit(limit))
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_result.scalar()
+
+    result = await db.execute(
+        apply_pagination_and_sort(query, Asset, page, page_size, order_by, order)
+    )
     assets = result.scalars().all()
-    return assets
+
+    return build_paginated_response(assets, AssetResponse, total, page, page_size)
 
 
 @router.get("/{asset_id}", response_model=AssetResponse)

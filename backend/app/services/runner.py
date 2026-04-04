@@ -7,8 +7,8 @@ This module handles the actual execution of proof runs and action runs.
 import asyncio
 import logging
 from datetime import datetime, timezone
-from typing import Any
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from backend.app.models.run import Run, RunStatus, RunType
 from backend.app.models.artifact import Artifact
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class RunExecutor:
     """Executor for running proof and action runs."""
 
-    async def execute_run(self, db: Session, run: Run) -> None:
+    async def execute_run(self, db: AsyncSession, run: Run) -> None:
         """
         Execute a run.
 
@@ -58,7 +58,7 @@ class RunExecutor:
                 stderr_log=str(e)
             )
 
-    async def _execute_proof_run(self, db: Session, run: Run) -> None:
+    async def _execute_proof_run(self, db: AsyncSession, run: Run) -> None:
         """
         Execute a proof run (validation).
 
@@ -72,10 +72,13 @@ class RunExecutor:
         logger.info(f"Executing proof run {run.id}")
 
         # Get associated artifacts
-        artifacts = db.query(Artifact).filter(
-            Artifact.run_id == run.id,
-            Artifact.is_deleted == False
-        ).all()
+        result = await db.execute(
+            select(Artifact).where(
+                Artifact.ticket_id == run.ticket_id,
+                Artifact.is_deleted == False
+            )
+        )
+        artifacts = result.scalars().all()
 
         if not artifacts:
             await update_run_status(
@@ -168,9 +171,9 @@ class RunExecutor:
         run.inputs_manifest = inputs_manifest
         run.outputs_manifest = outputs_manifest
         run.validator_version = script_spec.version if script_spec else "1.0.0"
-        db.commit()
+        await db.commit()
 
-    async def _execute_action_run(self, db: Session, run: Run) -> None:
+    async def _execute_action_run(self, db: AsyncSession, run: Run) -> None:
         """
         Execute an action run (script execution).
 

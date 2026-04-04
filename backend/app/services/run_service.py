@@ -1,6 +1,7 @@
 """Run service for managing execution records."""
 
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
 from backend.app.models.run import Run, RunType, RunStatus
@@ -12,24 +13,11 @@ from backend.app.audit.audit_logger import audit_logger
 
 
 async def create_run(
-    db: Session,
+    db: AsyncSession,
     run_in: RunCreate,
     executor: User
 ) -> Run:
-    """
-    Create a new run.
-
-    Args:
-        db: Database session
-        run_in: Run creation data
-        executor: User executing the run
-
-    Returns:
-        Created run object
-
-    Raises:
-        HTTPException: If ticket not found or validation fails
-    """
+    
     # TODO（权限与状态校验待完善）:
     # 当前仅对 ACTION 类型的 run 做了权限与状态限制，
     # 其他 run 类型（如 proof / precheck 等）几乎没有授权校验。
@@ -48,7 +36,8 @@ async def create_run(
     # 防止越权创建 run（IDOR），并避免非执行类 run 干扰工单主流程
 
     # Verify ticket exists
-    ticket = db.query(Ticket).filter(Ticket.id == run_in.ticket_id).first()
+    result = await db.execute(select(Ticket).where(Ticket.id == run_in.ticket_id))
+    ticket = result.scalar_one_or_none()
     if not ticket:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -86,8 +75,8 @@ async def create_run(
     # Update ticket status
     ticket.status = TicketStatus.RUNNING
 
-    db.commit()
-    db.refresh(run)
+    await db.commit()
+    await db.refresh(run)
 
     # Log run creation
     await audit_logger.log(AuditEvent(
@@ -108,30 +97,16 @@ async def create_run(
 
 
 async def update_run_status(
-    db: Session,
+    db: AsyncSession,
     run_id: int,
-    status: RunStatus,
+    new_status: RunStatus,
     result_summary: str | None = None,
     stdout_log: str | None = None,
     stderr_log: str | None = None,
     exit_code: int | None = None
 ) -> Run:
-    """
-    Update run status and logs.
-
-    Args:
-        db: Database session
-        run_id: Run ID
-        status: New status
-        result_summary: Result summary
-        stdout_log: Standard output log
-        stderr_log: Standard error log
-        exit_code: Exit code
-
-    Returns:
-        Updated run object
-    """
-    run = db.query(Run).filter(Run.id == run_id).first()
+    result = await db.execute(select(Run).where(Run.id == run_id))
+    run = result.scalar_one_or_none()
     if not run:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -139,7 +114,7 @@ async def update_run_status(
         )
 
     # Update run
-    run.status = status
+    run.status = new_status
     if result_summary is not None:
         run.result_summary = result_summary
     if stdout_log is not None:
@@ -150,38 +125,41 @@ async def update_run_status(
         run.exit_code = exit_code
 
     # Update related ticket status
-    ticket = run.ticket
-    if status == RunStatus.SUCCESS:
+    ticket_result = await db.execute(select(Ticket).where(Ticket.id == run.ticket_id))
+    ticket = ticket_result.scalar_one_or_none()
+    if new_status == RunStatus.SUCCESS:
         ticket.status = TicketStatus.DONE
         event_type = AuditEventType.RUN_COMPLETED
-    elif status == RunStatus.FAILED:
+    elif new_status == RunStatus.FAILED:
         ticket.status = TicketStatus.FAILED
         event_type = AuditEventType.RUN_FAILED
-    elif status == RunStatus.TIMEOUT:
+    elif new_status == RunStatus.TIMEOUT:
         ticket.status = TicketStatus.FAILED
         event_type = AuditEventType.RUN_TIMEOUT
-    elif status == RunStatus.RUNNING:
+    elif new_status == RunStatus.RUNNING:
         event_type = AuditEventType.RUN_STARTED
     else:
         event_type = AuditEventType.RUN_COMPLETED
 
-    db.commit()
-    db.refresh(run)
+    await db.commit()
+    await db.refresh(run)
 
     # Log status update
+    executor_result = await db.execute(select(User).where(User.id == run.executed_by_id))
+    executor = executor_result.scalar_one_or_none()
     await audit_logger.log(AuditEvent(
         event_type=event_type,
         actor_id=run.executed_by_id,
-        actor_username=run.executor.username,
+        actor_username=executor.username if executor else "unknown",
         resource_type="run",
         resource_id=run.id,
-        action=f"Run status updated to {status.value}",
+        action=f"Run status updated to {new_status.value}",
         details={
             "ticket_id": ticket.id,
             "exit_code": exit_code,
-            "success": status == RunStatus.SUCCESS
+            "success": new_status == RunStatus.SUCCESS
         },
-        success=status == RunStatus.SUCCESS
+        success=new_status == RunStatus.SUCCESS
     ))
 
     return run

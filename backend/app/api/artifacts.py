@@ -1,10 +1,10 @@
 """Artifact upload/download endpoints."""
 
-from fastapi import APIRouter, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, HTTPException, status, UploadFile, File, Query
 from fastapi.responses import Response
-from sqlalchemy import select
+from sqlalchemy import select, func
 
-from backend.app.schemas.artifact import ArtifactResponse, ArtifactUploadResponse
+from backend.app.schemas.artifact import ArtifactResponse, ArtifactUploadResponse, PaginatedArtifactResponse
 from backend.app.core.dependencies import DatabaseSession, CurrentUser
 from backend.app.services.artifact_service import upload_artifact, download_artifact
 from backend.app.models.artifact import Artifact
@@ -113,14 +113,15 @@ async def download_artifact_endpoint(
     )
 
 
-@router.get("/ticket/{ticket_id}", response_model=list[ArtifactResponse])
+@router.get("/ticket/{ticket_id}", response_model=PaginatedArtifactResponse)
 async def list_ticket_artifacts(
     ticket_id: int,
     db: DatabaseSession,
-    current_user: CurrentUser
+    current_user: CurrentUser,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100)
 ):
-    """List all artifacts for a ticket."""
-    # Verify ticket exists
+    """List all artifacts for a ticket with pagination."""
     result = await db.execute(select(Ticket).where(Ticket.id == ticket_id))
     ticket = result.scalar_one_or_none()
     if not ticket:
@@ -129,7 +130,6 @@ async def list_ticket_artifacts(
             detail="Ticket not found"
         )
 
-    # Check permissions
     if not current_user.is_admin:
         if ticket.created_by_id != current_user.id:
             raise HTTPException(
@@ -137,12 +137,25 @@ async def list_ticket_artifacts(
                 detail="Not authorized to view artifacts for this ticket"
             )
 
+    query = select(Artifact).where(
+        Artifact.ticket_id == ticket_id,
+        Artifact.is_deleted == False
+    )
+
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_result.scalar()
+
     result = await db.execute(
-        select(Artifact).where(
-            Artifact.ticket_id == ticket_id,
-            Artifact.is_deleted == False
-        )
+        query.order_by(Artifact.created_at.desc())
+             .offset((page - 1) * page_size)
+             .limit(page_size)
     )
     artifacts = result.scalars().all()
 
-    return artifacts
+    return {
+        "data": artifacts,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size
+    }

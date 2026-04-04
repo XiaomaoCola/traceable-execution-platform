@@ -54,3 +54,11 @@ class RunDetailResponse(RunResponse):
     stderr_log: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+# 新增
+class PaginatedRunResponse(BaseModel):
+    data: list[RunResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

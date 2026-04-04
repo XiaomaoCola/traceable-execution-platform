@@ -35,3 +35,10 @@ class AssetResponse(AssetBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class PaginatedAssetResponse(BaseModel):
+    data: list[AssetResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
