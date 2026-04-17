@@ -18,7 +18,7 @@
 | Cache / 运行态状态      | Redis |
 | Object Storage     | MinIO（S3-compatible） |
 | LLM Proxy          | LiteLLM |
-| Frontend           | 原生 HTML / JS · Nginx |
+| Frontend           | React · TypeScript · Vite · Nginx |
 | Orchestration / 编排 | Kubernetes · Kind（本地多节点集群） · Nginx Ingress Controller |
 | 容器化                | Docker · Docker Compose |
 | Workflow           | 节点式 workflow 引擎 · LiteLLM 接入本地/云端 LLM |
