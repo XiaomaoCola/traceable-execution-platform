@@ -10,7 +10,7 @@ import Layout from './components/Layout'
 
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import HomePage from './pages/HomePage'
+import HomePage from './pages/home/HomePage'
 
 import TicketsPage from './pages/tickets/TicketsPage'
 import TicketDetailPage from './pages/tickets/TicketDetailPage'
@@ -19,8 +19,9 @@ import AssetDetailPage from './pages/assets/AssetDetailPage'
 import RunsPage from './pages/runs/RunsPage'
 import RunDetailPage from './pages/runs/RunDetailPage'
 
-import AiFortunePage from './pages/ai/AiFortunePage'
-import AiStockPage from './pages/ai/AiStockPage'
+import AiHomePage from './pages/ai/AiHomePage/AiHomePage'
+import AiFortunePage from './pages/ai/AiFortunePage/AiFortunePage'
+import AiStockPage from './pages/ai/AiStockPage/AiStockPage'
 import AiTicketPage from './pages/ai/AiTicketPage'
 // 客服机器人：需要登录，后端按用户 ID 维护长期对话记忆
 import AiCustomerServicePage from './pages/ai/AiCustomerServicePage'
@@ -40,6 +41,25 @@ const router = createBrowserRouter([
     ),
   },
 
+  // ── AI 系统：全屏无侧边栏（fortune / stock / customer-service）─────────
+  {
+    path: '/ai',
+    element: <ProtectedRoute><AiHomePage /></ProtectedRoute>,
+  },
+  {
+    path: '/ai/fortune',
+    element: <ProtectedRoute><AiFortunePage /></ProtectedRoute>,
+  },
+  {
+    path: '/ai/stock',
+    element: <ProtectedRoute><AiStockPage /></ProtectedRoute>,
+  },
+  // 客服机器人：后端按用户身份维护长期记忆，需要登录态（已由外层 ProtectedRoute 保证）
+  {
+    path: '/ai/customer-service',
+    element: <ProtectedRoute><AiCustomerServicePage /></ProtectedRoute>,
+  },
+
   // ── 工单系统：带侧边栏布局 ───────────────────────────────────────────────
   {
     element: (
@@ -55,11 +75,6 @@ const router = createBrowserRouter([
       { path: '/runs', element: <RunsPage /> },
       { path: '/runs/:id', element: <RunDetailPage /> },
       { path: '/ai/ticket', element: <AiTicketPage /> },
-      { path: '/ai/fortune', element: <AiFortunePage /> },
-      { path: '/ai/stock', element: <AiStockPage /> },
-      // 客服机器人：后端按用户身份维护长期记忆，需要登录态（已由外层 ProtectedRoute 保证）
-      { path: '/ai/customer-service', element: <AiCustomerServicePage /> },
-      { path: '/ai', element: <Navigate to="/ai/fortune" replace /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

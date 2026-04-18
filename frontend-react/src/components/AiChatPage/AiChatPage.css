@@ -1,0 +1,240 @@
+/* 暗色主题 AI 对话页共享结构样式。
+   页面级主题色通过 CSS 变量注入，各 Agent 页面覆盖对应变量即可。
+
+   必须设置的变量（在各页面 CSS 中定义）：
+   --page-bg        页面背景（渐变或纯色）
+   --accent         主题色（按钮、边框、工具标签等）
+   --accent-rgb     主题色 RGB 三元组，用于 rgba()
+   --text           主要文字颜色
+   --text-muted     次要文字颜色
+   --answer-border  最终回答左边框颜色
+   --answer-bg      最终回答背景色
+   --answer-color   最终回答文字颜色
+*/
+
+* { box-sizing: border-box; }
+
+.ai-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: var(--font-family, 'PingFang SC', 'Microsoft YaHei', sans-serif);
+}
+
+.ai-container {
+  width: 720px;
+  max-width: 96vw;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+}
+
+/* 顶栏：返回按钮 */
+.ai-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: -8px;
+}
+
+.ai-back-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.2s;
+}
+
+.ai-back-btn:hover { color: var(--text); }
+
+/* 标题区 */
+.ai-title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: var(--title-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.ai-subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin: -8px 0 0;
+}
+
+/* 输入区 */
+.ai-input-area {
+  display: flex;
+  gap: 10px;
+}
+
+.ai-textarea {
+  flex: 1;
+  background: rgba(var(--accent-rgb), 0.05);
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-size: 0.95rem;
+  resize: none;
+  outline: none;
+  height: 68px;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.ai-textarea::placeholder { color: var(--text-muted); }
+.ai-textarea:focus { border-color: rgba(var(--accent-rgb), 0.8); }
+.ai-textarea:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.ai-send-btn {
+  background: var(--btn-gradient, linear-gradient(135deg, var(--accent), var(--accent)));
+  border: none;
+  border-radius: 10px;
+  padding: 0 24px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+  transition: opacity 0.2s;
+}
+
+.ai-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 对话框 */
+.ai-chat-box {
+  background: rgba(var(--accent-rgb), 0.03);
+  border: 1px solid rgba(var(--accent-rgb), 0.12);
+  border-radius: 14px;
+  padding: 20px;
+  min-height: 380px;
+  max-height: 540px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 空状态占位 */
+.ai-placeholder {
+  margin: auto;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 2;
+  opacity: 0.6;
+}
+
+/* 用户气泡 */
+.ai-user-bubble {
+  text-align: right;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  padding: 6px 0;
+  animation: aiPageFadeIn 0.3s ease;
+}
+
+/* 工具调用步骤 */
+.ai-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.85rem;
+  animation: aiPageFadeIn 0.3s ease;
+}
+
+.ai-step-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ai-step.calling .ai-step-icon { background: rgba(var(--accent-rgb), 0.2); }
+.ai-step.done    .ai-step-icon { background: rgba(72, 199, 142, 0.2); }
+
+.ai-step-body { flex: 1; }
+
+.ai-step-label {
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.ai-step.calling .ai-step-label { color: rgba(var(--accent-rgb), 1); }
+.ai-step.done    .ai-step-label { color: #48c78e; }
+
+.ai-step-detail {
+  color: var(--text-muted);
+  word-break: break-all;
+  white-space: pre-wrap;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 最终回答 */
+.ai-answer {
+  background: var(--answer-bg);
+  border-left: 3px solid var(--answer-border);
+  border-radius: 0 10px 10px 0;
+  padding: 16px 18px;
+  color: var(--answer-color);
+  line-height: 1.9;
+  white-space: pre-wrap;
+  animation: aiPageFadeIn 0.4s ease;
+  font-size: 0.92rem;
+}
+
+/* 错误信息 */
+.ai-error {
+  color: #ff5252;
+  font-size: 0.88rem;
+  padding: 12px;
+  background: rgba(255, 82, 82, 0.08);
+  border-radius: 8px;
+}
+
+/* 底部提示 */
+.ai-tip {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  opacity: 0.6;
+}
+
+/* Spinner */
+@keyframes aiPageSpin { to { transform: rotate(360deg); } }
+
+.ai-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(var(--accent-rgb), 0.2);
+  border-top-color: rgba(var(--accent-rgb), 1);
+  border-radius: 50%;
+  animation: aiPageSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes aiPageFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}

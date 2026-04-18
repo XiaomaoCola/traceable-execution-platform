@@ -1,0 +1,14 @@
+/* 量化先知主题：黑色终端风，绿色行情配色，等宽字体 */
+.theme-stock {
+  --page-bg: #060d1a;
+  --accent: #00e676;
+  --accent-rgb: 0, 230, 118;
+  --text: #c8d8e8;
+  --text-muted: #4a7a9b;
+  --font-family: 'PingFang SC', 'Microsoft YaHei', 'Courier New', monospace;
+  --title-gradient: linear-gradient(90deg, #00e676, #00bcd4);
+  --btn-gradient: linear-gradient(135deg, #00c853, #00838f);
+  --answer-border: #00e676;
+  --answer-bg: rgba(0, 230, 118, 0.06);
+  --answer-color: #b8e8c8;
+}

@@ -1,7 +1,7 @@
 // AI 工单助手页，路由 /ai/ticket，归属工单系统侧边栏。
 // 调用 agent2 接口，可以辅助分析工单、设备配置等问题。
 
-import AiChatPage from '../../components/AiChatPage'
+import AiChatPage from '../../components/TicketAiPage'
 
 export default function AiTicketPage() {
   return (
