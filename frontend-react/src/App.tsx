@@ -22,6 +22,8 @@ import RunDetailPage from './pages/runs/RunDetailPage'
 import AiFortunePage from './pages/ai/AiFortunePage'
 import AiStockPage from './pages/ai/AiStockPage'
 import AiTicketPage from './pages/ai/AiTicketPage'
+// 客服机器人：需要登录，后端按用户 ID 维护长期对话记忆
+import AiCustomerServicePage from './pages/ai/AiCustomerServicePage'
 
 const router = createBrowserRouter([
   // ── 公开页面 ────────────────────────────────────────────────────────────
@@ -55,6 +57,8 @@ const router = createBrowserRouter([
       { path: '/ai/ticket', element: <AiTicketPage /> },
       { path: '/ai/fortune', element: <AiFortunePage /> },
       { path: '/ai/stock', element: <AiStockPage /> },
+      // 客服机器人：后端按用户身份维护长期记忆，需要登录态（已由外层 ProtectedRoute 保证）
+      { path: '/ai/customer-service', element: <AiCustomerServicePage /> },
       { path: '/ai', element: <Navigate to="/ai/fortune" replace /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],

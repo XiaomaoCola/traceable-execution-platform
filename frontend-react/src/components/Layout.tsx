@@ -9,7 +9,7 @@ import {
 import {
   HomeOutlined, FileTextOutlined, DesktopOutlined, PlayCircleOutlined,
   RobotOutlined, StarOutlined, StockOutlined, MenuFoldOutlined,
-  MenuUnfoldOutlined, UserOutlined, LogoutOutlined,
+  MenuUnfoldOutlined, UserOutlined, LogoutOutlined, CustomerServiceOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '../context/AuthContext'
 
@@ -54,11 +54,13 @@ const aiMenuItems = [
   { key: '/', icon: <HomeOutlined />, label: '首页' },
   { key: '/ai/fortune', icon: <StarOutlined />, label: 'AI 算命师' },
   { key: '/ai/stock', icon: <StockOutlined />, label: 'AI 量化先知' },
+  // 客服机器人：登录用户独享长期记忆，对话历史跨会话持久保存
+  { key: '/ai/customer-service', icon: <CustomerServiceOutlined />, label: 'AI 客服机器人' },
 ]
 
-// /ai/fortune 和 /ai/stock 显示 AI 导航，其余显示工单系统导航
+// /ai/* 路径显示 AI 导航，其余显示工单系统导航
 function getMenuItems(pathname: string) {
-  if (pathname.startsWith('/ai/fortune') || pathname.startsWith('/ai/stock')) {
+  if (pathname.startsWith('/ai/')) {
     return aiMenuItems
   }
   return ticketMenuItems
