@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎫 AI 工单助手</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #0a0e1a, #0d1b2a, #0a1628);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d0e8ff;
+  }
+  .container {
+    width: 760px;
+    max-width: 96vw;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    letter-spacing: .08em;
+    background: linear-gradient(90deg, #4fc3f7, #0288d1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    text-align: center;
+    color: #3a6a8a;
+    font-size: .88rem;
+    margin-top: -12px;
+  }
+  .input-area { display: flex; gap: 10px; }
+  textarea {
+    flex: 1;
+    background: rgba(79,195,247,.05);
+    border: 1px solid rgba(79,195,247,.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #d0e8ff;
+    font-size: .95rem;
+    resize: none;
+    outline: none;
+    height: 68px;
+    transition: border-color .2s;
+    font-family: inherit;
+  }
+  textarea::placeholder { color: #2a4a5a; }
+  textarea:focus { border-color: #4fc3f7; }
+  button {
+    background: linear-gradient(135deg, #0288d1, #0097a7);
+    border: none;
+    border-radius: 10px;
+    padding: 0 24px;
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity .2s;
+  }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .chat-box {
+    background: rgba(79,195,247,.03);
+    border: 1px solid rgba(79,195,247,.1);
+    border-radius: 14px;
+    padding: 20px;
+    min-height: 380px;
+    max-height: 560px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .placeholder {
+    margin: auto;
+    text-align: center;
+    color: #1e3a4a;
+    font-size: .9rem;
+    line-height: 2;
+  }
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: .85rem;
+    animation: fadeIn .3s ease;
+  }
+  .step-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .8rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step.calling .step-icon { background: rgba(79,195,247,.2); }
+  .step.result  .step-icon { background: rgba(38,198,218,.2); }
+  .step-body { flex: 1; }
+  .step-label { font-weight: 600; margin-bottom: 3px; }
+  .step.calling .step-label { color: #4fc3f7; }
+  .step.result  .step-label { color: #26c6da; }
+  .step-detail { color: #2a6a8a; word-break: break-all; white-space: pre-wrap; font-size: .82rem; }
+  .answer {
+    background: rgba(2,136,209,.06);
+    border-left: 3px solid #0288d1;
+    border-radius: 0 10px 10px 0;
+    padding: 16px 18px;
+    color: #b8d8f0;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    animation: fadeIn .4s ease;
+    font-size: .92rem;
+  }
+  .error-msg {
+    color: #ef5350;
+    font-size: .88rem;
+    padding: 12px;
+    background: rgba(239,83,80,.08);
+    border-radius: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(79,195,247,.2);
+    border-top-color: #4fc3f7;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+  .tip { text-align: center; color: #1e3a4a; font-size: .78rem; }
+  .quick-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .quick-btn {
+    background: rgba(79,195,247,.08);
+    border: 1px solid rgba(79,195,247,.2);
+    border-radius: 20px;
+    padding: 5px 14px;
+    color: #4fc3f7;
+    font-size: .82rem;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .quick-btn:hover { background: rgba(79,195,247,.15); }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎫 AI 工单助手</h1>
+  <p class="subtitle">查工单 · 查设备 · 看状态</p>
+
+  <div class="quick-btns">
+    <button class="quick-btn" onclick="fill('列出所有待审批的工单')">待审批工单</button>
+    <button class="quick-btn" onclick="fill('有哪些工单正在运行中？')">运行中工单</button>
+    <button class="quick-btn" onclick="fill('最近失败的工单有哪些？')">失败工单</button>
+    <button class="quick-btn" onclick="fill('查一下工单 #1 的详情')">工单详情</button>
+  </div>
+
+  <div class="input-area">
+    <textarea id="input" placeholder="例：查一下所有 submitted 状态的工单 / 工单 #3 是什么情况？"></textarea>
+    <button id="sendBtn" onclick="sendMessage()">查询</button>
+  </div>
+
+  <div class="chat-box" id="chatBox">
+    <div class="placeholder" id="placeholder">
+      💬 输入你的问题<br>例：最近有哪些失败的工单？某台设备有几张工单？
+    </div>
+  </div>
+
+  <p class="tip">数据来自平台工单数据库，实时查询</p>
+</div>
+
+<script>
+const TOOL_NAMES = {
+  search_tickets:        '搜索工单列表',
+  get_ticket_detail:     '查询工单详情',
+  get_tickets_by_asset:  '查询设备工单历史',
+};
+const TOOL_ICONS = {
+  search_tickets:        '🔍',
+  get_ticket_detail:     '📋',
+  get_tickets_by_asset:  '🖥️',
+};
+
+function fill(text) {
+  document.getElementById('input').value = text;
+  document.getElementById('input').focus();
+}
+
+function sendMessage() {
+  const input = document.getElementById('input');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const box = document.getElementById('chatBox');
+  document.getElementById('placeholder')?.remove();
+
+  const userBubble = document.createElement('div');
+  userBubble.style.cssText = 'text-align:right;color:#3a6a8a;font-size:.88rem;padding:6px 0;';
+  userBubble.textContent = '你：' + msg;
+  box.appendChild(userBubble);
+
+  const loading = document.createElement('div');
+  loading.id = 'loading';
+  loading.innerHTML = '<div class="spinner" style="margin:16px auto;"></div>';
+  box.appendChild(loading);
+  box.scrollTop = box.scrollHeight;
+
+  document.getElementById('sendBtn').disabled = true;
+  input.value = '';
+
+  fetch('/api/v1/agent2/ticket', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: msg }),
+  }).then(async resp => {
+    document.getElementById('loading')?.remove();
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    const toolEls = {};
+    let answerEl = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n\n');
+      buf = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        let event;
+        try { event = JSON.parse(line.slice(5).trim()); } catch { continue; }
+
+        if (event.type === 'tool_start') {
+          const el = document.createElement('div');
+          el.className = 'step calling';
+          el.innerHTML = `
+            <div class="step-icon">${TOOL_ICONS[event.tool] || '⚙️'}</div>
+            <div class="step-body">
+              <div class="step-label">${TOOL_NAMES[event.tool] || event.tool}</div>
+              <div class="step-detail" style="display:flex;align-items:center;gap:8px;">
+                <div class="spinner"></div><span>查询中…</span>
+              </div>
+            </div>`;
+          box.appendChild(el);
+          toolEls[event.tool] = el;
+        }
+
+        if (event.type === 'tool_result') {
+          const el = toolEls[event.tool];
+          if (el) {
+            el.className = 'step result';
+            el.querySelector('.step-label').textContent = '✓ ' + (TOOL_NAMES[event.tool] || event.tool);
+            el.querySelector('.step-detail').textContent = event.result;
+          }
+        }
+
+        if (event.type === 'text_chunk') {
+          if (!answerEl) {
+            answerEl = document.createElement('div');
+            answerEl.className = 'answer';
+            box.appendChild(answerEl);
+          }
+          answerEl.textContent += event.content;
+        }
+
+        if (event.type === 'error') {
+          const el = document.createElement('div');
+          el.className = 'error-msg';
+          el.textContent = '出错了：' + event.content;
+          box.appendChild(el);
+        }
+
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+  }).catch(err => {
+    document.getElementById('loading')?.remove();
+    const el = document.createElement('div');
+    el.className = 'error-msg';
+    el.textContent = '连接失败：' + err.message;
+    box.appendChild(el);
+  }).finally(() => {
+    document.getElementById('sendBtn').disabled = false;
+    box.scrollTop = box.scrollHeight;
+  });
+}
+
+document.getElementById('input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+</script>
+</body>
+</html>

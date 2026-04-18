@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📈 AI 量化先知</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', 'Courier New', monospace;
+    background: #060d1a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c8d8e8;
+  }
+  .container {
+    width: 760px;
+    max-width: 96vw;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    letter-spacing: .08em;
+    background: linear-gradient(90deg, #00e676, #00bcd4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    text-align: center;
+    color: #4a7a9b;
+    font-size: .88rem;
+    margin-top: -12px;
+  }
+  .input-area {
+    display: flex;
+    gap: 10px;
+  }
+  textarea {
+    flex: 1;
+    background: rgba(0,230,118,.05);
+    border: 1px solid rgba(0,230,118,.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #c8d8e8;
+    font-size: .95rem;
+    resize: none;
+    outline: none;
+    height: 68px;
+    transition: border-color .2s;
+    font-family: inherit;
+  }
+  textarea::placeholder { color: #2a5a6b; }
+  textarea:focus { border-color: #00e676; }
+  button {
+    background: linear-gradient(135deg, #00c853, #00838f);
+    border: none;
+    border-radius: 10px;
+    padding: 0 24px;
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    letter-spacing: .05em;
+    transition: opacity .2s;
+  }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .chat-box {
+    background: rgba(0,230,118,.03);
+    border: 1px solid rgba(0,230,118,.12);
+    border-radius: 14px;
+    padding: 20px;
+    min-height: 380px;
+    max-height: 540px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .placeholder {
+    margin: auto;
+    text-align: center;
+    color: #1e4a5c;
+    font-size: .9rem;
+    line-height: 2;
+  }
+  /* Tool step */
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: .85rem;
+    animation: fadeIn .3s ease;
+  }
+  .step-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .8rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step.calling .step-icon { background: rgba(0,188,212,.2); }
+  .step.result  .step-icon { background: rgba(0,230,118,.2); }
+  .step-body { flex: 1; }
+  .step-label { font-weight: 600; margin-bottom: 3px; }
+  .step.calling .step-label { color: #00bcd4; }
+  .step.result  .step-label { color: #00e676; }
+  .step-detail { color: #4a8a6b; word-break: break-all; white-space: pre-wrap; font-size: .82rem; }
+  /* Final answer */
+  .answer {
+    background: rgba(0,230,118,.06);
+    border-left: 3px solid #00e676;
+    border-radius: 0 10px 10px 0;
+    padding: 16px 18px;
+    color: #b8e8c8;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    animation: fadeIn .4s ease;
+    font-size: .92rem;
+  }
+  .error-msg {
+    color: #ff5252;
+    font-size: .88rem;
+    padding: 12px;
+    background: rgba(255,82,82,.08);
+    border-radius: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,230,118,.2);
+    border-top-color: #00e676;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+  .tip {
+    text-align: center;
+    color: #1e4a5c;
+    font-size: .78rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📈 AI 量化先知</h1>
+  <p class="subtitle">实时拉取 A 股三大指数 · 动量模型预测未来 5 日区间</p>
+
+  <div class="input-area">
+    <textarea id="input" placeholder="例：帮我分析今天 A 股大盘走势，预测未来几天的情况"></textarea>
+    <button id="sendBtn" onclick="sendMessage()">分析</button>
+  </div>
+
+  <div class="chat-box" id="chatBox">
+    <div class="placeholder" id="placeholder">
+      📊 输入你的问题<br>Agent 会自动获取三大指数实时行情<br>再用动量模型计算短期价格区间
+    </div>
+  </div>
+
+  <p class="tip">⚠️ 以上内容仅供技术演示，不构成任何投资建议</p>
+</div>
+
+<script>
+const TOOL_NAMES = {
+  get_astock_indices: '拉取三大指数行情',
+  predict_trend:      '动量模型预测区间',
+};
+const TOOL_ICONS = {
+  get_astock_indices: '📡',
+  predict_trend:      '🔢',
+};
+
+function sendMessage() {
+  const input = document.getElementById('input');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const box = document.getElementById('chatBox');
+  document.getElementById('placeholder')?.remove();
+
+  const userBubble = document.createElement('div');
+  userBubble.style.cssText = 'text-align:right;color:#4a8a6b;font-size:.88rem;padding:6px 0;';
+  userBubble.textContent = '你：' + msg;
+  box.appendChild(userBubble);
+
+  const loading = document.createElement('div');
+  loading.id = 'loading';
+  loading.innerHTML = '<div class="spinner" style="margin:16px auto;"></div>';
+  box.appendChild(loading);
+  box.scrollTop = box.scrollHeight;
+
+  document.getElementById('sendBtn').disabled = true;
+  input.value = '';
+
+  fetch('/api/v1/agent1/stock', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: msg }),
+  }).then(async resp => {
+    document.getElementById('loading')?.remove();
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    const toolEls = {};
+    let answerEl = null; // 流式文本容器，首个 text_chunk 时创建
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n\n');
+      buf = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        let event;
+        try { event = JSON.parse(line.slice(5).trim()); } catch { continue; }
+
+        if (event.type === 'tool_start') {
+          const el = document.createElement('div');
+          el.className = 'step calling';
+          el.innerHTML = `
+            <div class="step-icon">${TOOL_ICONS[event.tool] || '⚙️'}</div>
+            <div class="step-body">
+              <div class="step-label">${TOOL_NAMES[event.tool] || event.tool}</div>
+              <div class="step-detail" style="display:flex;align-items:center;gap:8px;">
+                <div class="spinner"></div>
+                <span>请求中…</span>
+              </div>
+            </div>`;
+          box.appendChild(el);
+          toolEls[event.tool] = el;
+        }
+
+        if (event.type === 'tool_result') {
+          const el = toolEls[event.tool];
+          if (el) {
+            el.className = 'step result';
+            el.querySelector('.step-label').textContent = '✓ ' + (TOOL_NAMES[event.tool] || event.tool);
+            el.querySelector('.step-detail').innerHTML = escapeHtml(event.result);
+          }
+        }
+
+        if (event.type === 'text_chunk') {
+          if (!answerEl) {
+            answerEl = document.createElement('div');
+            answerEl.className = 'answer';
+            box.appendChild(answerEl);
+          }
+          answerEl.textContent += event.content;
+        }
+
+        if (event.type === 'error') {
+          const el = document.createElement('div');
+          el.className = 'error-msg';
+          el.textContent = '出错了：' + event.content;
+          box.appendChild(el);
+        }
+
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+  }).catch(err => {
+    document.getElementById('loading')?.remove();
+    const el = document.createElement('div');
+    el.className = 'error-msg';
+    el.textContent = '连接失败：' + err.message;
+    box.appendChild(el);
+  }).finally(() => {
+    document.getElementById('sendBtn').disabled = false;
+    box.scrollTop = box.scrollHeight;
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.getElementById('input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+</script>
+</body>
+</html>

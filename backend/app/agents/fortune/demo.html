@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔮 AI 算命师</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e8e0ff;
+  }
+  .container {
+    width: 720px;
+    max-width: 96vw;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    letter-spacing: .1em;
+    background: linear-gradient(90deg, #f5af19, #f12711);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    text-align: center;
+    color: #a89fcf;
+    font-size: .9rem;
+    margin-top: -12px;
+  }
+  .input-area {
+    display: flex;
+    gap: 10px;
+  }
+  textarea {
+    flex: 1;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: #e8e0ff;
+    font-size: 1rem;
+    resize: none;
+    outline: none;
+    height: 72px;
+    transition: border-color .2s;
+  }
+  textarea::placeholder { color: #7a6fa0; }
+  textarea:focus { border-color: #9c88ff; }
+  button {
+    background: linear-gradient(135deg, #9c88ff, #6c63ff);
+    border: none;
+    border-radius: 12px;
+    padding: 0 24px;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity .2s;
+  }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .chat-box {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 16px;
+    padding: 20px;
+    min-height: 360px;
+    max-height: 520px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .placeholder {
+    margin: auto;
+    text-align: center;
+    color: #6b6080;
+    font-size: .95rem;
+    line-height: 1.8;
+  }
+  /* Tool step */
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: .88rem;
+    animation: fadeIn .3s ease;
+  }
+  .step-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .85rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step.calling .step-icon { background: rgba(156,136,255,.25); }
+  .step.result  .step-icon { background: rgba( 72,199,142,.25); }
+  .step-body { flex: 1; }
+  .step-label {
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .step.calling .step-label { color: #9c88ff; }
+  .step.result  .step-label { color: #48c78e; }
+  .step-detail { color: #b0a8cc; word-break: break-all; }
+  /* Final answer */
+  .answer {
+    background: rgba(245,175,25,.08);
+    border-left: 3px solid #f5af19;
+    border-radius: 0 12px 12px 0;
+    padding: 16px 18px;
+    color: #f0e6c0;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    animation: fadeIn .4s ease;
+  }
+  .error-msg {
+    color: #ff7675;
+    font-size: .9rem;
+    padding: 12px;
+    background: rgba(255,118,117,.1);
+    border-radius: 8px;
+  }
+  /* Spinner */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(156,136,255,.3);
+    border-top-color: #9c88ff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin: auto;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  .tip {
+    text-align: center;
+    color: #6b6080;
+    font-size: .8rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔮 AI 算命师</h1>
+  <p class="subtitle">告诉我你的生日和所在城市，我来算今日运势</p>
+
+  <div class="input-area">
+    <textarea id="input" placeholder="例：我1990年5月15日出生，现在在上海，帮我算算今日运势"></textarea>
+    <button id="sendBtn" onclick="sendMessage()">占卜</button>
+  </div>
+
+  <div class="chat-box" id="chatBox">
+    <div class="placeholder" id="placeholder">
+      ✨ 输入你的生日和城市<br>AI 会自动查询今日天气、推算星座生肖<br>再为你生成专属运势报告
+    </div>
+  </div>
+
+  <p class="tip">Agent 会自动调用工具：查今日日期 · 查实时天气 · 推算星座生肖</p>
+</div>
+
+<script>
+const TOOL_NAMES = {
+  get_current_date: '查询今日日期',
+  get_weather: '查询实时天气',
+  get_zodiac: '推算星座命盘',
+};
+const TOOL_ICONS = {
+  get_current_date: '📅',
+  get_weather: '🌤️',
+  get_zodiac: '⭐',
+};
+
+function sendMessage() {
+  const input = document.getElementById('input');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const box = document.getElementById('chatBox');
+  document.getElementById('placeholder')?.remove();
+
+  // 用户气泡
+  const userBubble = document.createElement('div');
+  userBubble.style.cssText = 'text-align:right;color:#c5b8f0;font-size:.9rem;padding:8px 0;';
+  userBubble.textContent = '你：' + msg;
+  box.appendChild(userBubble);
+
+  // 加载中
+  const loading = document.createElement('div');
+  loading.id = 'loading';
+  loading.innerHTML = '<div class="spinner"></div>';
+  loading.style.cssText = 'padding:16px;';
+  box.appendChild(loading);
+  box.scrollTop = box.scrollHeight;
+
+  document.getElementById('sendBtn').disabled = true;
+  input.value = '';
+
+  fetch('/api/v1/agent/fortune', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: msg }),
+  }).then(async resp => {
+    document.getElementById('loading')?.remove();
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    const toolEls = {};  // 本次请求私有的元素引用，不跨对话共享
+    let answerEl = null; // 流式文本容器，首个 text_chunk 时创建
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n\n');
+      buf = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        let event;
+        try { event = JSON.parse(line.slice(5).trim()); } catch { continue; }
+
+        if (event.type === 'tool_start') {
+          const el = document.createElement('div');
+          el.className = 'step calling';
+          el.innerHTML = `
+            <div class="step-icon">${TOOL_ICONS[event.tool] || '⚙️'}</div>
+            <div class="step-body">
+              <div class="step-label">${TOOL_NAMES[event.tool] || event.tool}</div>
+              <div class="step-detail" style="display:flex;align-items:center;gap:8px;">
+                <div class="spinner" style="width:12px;height:12px;flex-shrink:0;"></div>
+                <span>请求中…</span>
+              </div>
+            </div>`;
+          box.appendChild(el);
+          toolEls[event.tool] = el;  // 存到本次请求的局部 map
+        }
+
+        if (event.type === 'tool_result') {
+          const el = toolEls[event.tool];  // 从局部 map 取，不会找到旧对话的元素
+          if (el) {
+            el.className = 'step result';
+            el.querySelector('.step-label').textContent = '✓ ' + (TOOL_NAMES[event.tool] || event.tool);
+            el.querySelector('.step-detail').innerHTML = escapeHtml(event.result);
+          }
+        }
+
+        if (event.type === 'text_chunk') {
+          if (!answerEl) {
+            answerEl = document.createElement('div');
+            answerEl.className = 'answer';
+            box.appendChild(answerEl);
+          }
+          answerEl.textContent += event.content;
+        }
+
+        if (event.type === 'error') {
+          const el = document.createElement('div');
+          el.className = 'error-msg';
+          el.textContent = '出错了：' + event.content;
+          box.appendChild(el);
+        }
+
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+  }).catch(err => {
+    document.getElementById('loading')?.remove();
+    const el = document.createElement('div');
+    el.className = 'error-msg';
+    el.textContent = '连接失败：' + err.message;
+    box.appendChild(el);
+  }).finally(() => {
+    document.getElementById('sendBtn').disabled = false;
+    box.scrollTop = box.scrollHeight;
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.getElementById('input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+</script>
+</body>
+</html>
