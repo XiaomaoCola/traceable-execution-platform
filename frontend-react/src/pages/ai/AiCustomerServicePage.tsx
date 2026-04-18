@@ -8,7 +8,7 @@
 //   · 上下文感知：可记住你的姓名、问题背景、之前的处理进展，跨会话连贯对话
 //   · 智能问答：支持咨询产品使用、反馈问题、查询订单状态等常见客服场景
 
-import AiChatPage from '../../components/AiChatPage'
+import AiChatPage from '../../components/TicketAiPage'
 
 export default function AiCustomerServicePage() {
   return (
