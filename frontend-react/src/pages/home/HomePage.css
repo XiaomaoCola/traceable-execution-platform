@@ -1,0 +1,84 @@
+.flip-card {
+  background-color: transparent;
+  width: 260px;
+  height: 300px;
+  perspective: 1000px;
+  font-family: sans-serif;
+  cursor: pointer;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+
+.flip-card:hover .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  box-shadow: 0 8px 14px 0 rgba(0, 0, 0, 0.2);
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 1rem;
+  padding: 32px 24px;
+  box-sizing: border-box;
+}
+
+/* 工单系统卡片 — 蓝色系 */
+.flip-card-front.ticket {
+  border: 1px solid #4f6ef7;
+  background: linear-gradient(120deg, #eef0ff 60%, #e8ecff 88%, #dce2ff 40%, rgba(79, 110, 247, 0.15) 48%);
+  color: #4f6ef7;
+}
+
+.flip-card-back.ticket {
+  background: linear-gradient(120deg, #6b85f8 30%, #4f6ef7 88%, #8fa3ff 40%, #7b94f9 78%);
+  color: white;
+  transform: rotateY(180deg);
+}
+
+/* AI 助手卡片 — 绿色系 */
+.flip-card-front.ai {
+  border: 1px solid #52c41a;
+  background: linear-gradient(120deg, #f6ffed 60%, #edffd8 88%, #d9f7be 40%, rgba(82, 196, 26, 0.15) 48%);
+  color: #52c41a;
+}
+
+.flip-card-back.ai {
+  background: linear-gradient(120deg, #73d13d 30%, #52c41a 88%, #95de64 40%, #6abe32 78%);
+  color: white;
+  transform: rotateY(180deg);
+}
+
+.flip-card-title {
+  font-size: 1.3em;
+  font-weight: 900;
+  margin: 0;
+}
+
+.flip-card-desc {
+  font-size: 0.85em;
+  opacity: 0.85;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.flip-card-hint {
+  font-size: 0.8em;
+  opacity: 0.75;
+  margin-top: 8px;
+}

@@ -63,7 +63,7 @@ export default function AiChatPage({
   useEffect(() => {
     saveMessages(endpoint, messages)
   }, [messages, endpoint])
-
+  // messages 变化时滚动到底部
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
@@ -220,9 +220,13 @@ export default function AiChatPage({
 
         {messages.map((msg, i) => (
           <div key={i} style={msg.role === 'user' ? styles.userRow : styles.assistantRow}>
+            {/* 外层循环 — 遍历所有消息，每条消息根据 role 决定样式：user 消息靠右，assistant 消息靠左 */}
             <div style={msg.role === 'user' ? styles.userBubble : styles.assistantBubble}>
+              {/* 气泡样式：user 是蓝色气泡，assistant 是白色气泡 */}
               {msg.blocks.map((block, j) => {
+                //每条消息里有多个 block，比如一条 assistant 消息可能包含：工具调用块 + 工具调用块 + 文字块，依次渲染
                 if (block.kind === 'text') {
+                  // 文字块渲染
                   return <span key={j} style={{ whiteSpace: 'pre-wrap' }}>{block.content}</span>
                 }
                 return (
@@ -231,6 +235,10 @@ export default function AiChatPage({
                       {block.status === 'running' ? '⚙️ 执行中' : '✅ 完成'}
                     </Tag>
                     <Text style={{ fontSize: 12, color: '#4f6ef7' }}>{block.tool}</Text>
+                    {/* 工具完成后显示实际返回内容 */}
+                    {block.status === 'done' && block.result && (
+                      <Text style={{ fontSize: 12, color: '#666' }}>{block.result}</Text>
+                    )}
                   </div>
                 )
               })}

@@ -1,0 +1,13 @@
+/* 算命师主题：深紫色神秘风，金橙渐变标题 */
+.theme-fortune {
+  --page-bg: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  --accent: #9c88ff;
+  --accent-rgb: 156, 136, 255;
+  --text: #e8e0ff;
+  --text-muted: #a89fcf;
+  --title-gradient: linear-gradient(90deg, #f5af19, #f12711);
+  --btn-gradient: linear-gradient(135deg, #9c88ff, #6c63ff);
+  --answer-border: #f5af19;
+  --answer-bg: rgba(245, 175, 25, 0.08);
+  --answer-color: #f0e6c0;
+}
