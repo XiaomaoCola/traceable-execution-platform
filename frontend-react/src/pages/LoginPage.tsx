@@ -36,7 +36,7 @@ export default function LoginPage() {
     setGuestLoading(true)
     setErrorMsg('')
     try {
-      await login('guest', 'guest123')
+      await login('游客', 'guest123')
       navigate('/')
     } catch (err: unknown) {
       setErrorMsg('游客登录失败，请联系管理员')

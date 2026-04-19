@@ -35,7 +35,7 @@ export default function HomePage() {
       <div style={styles.content}>
         {/* 欢迎语 */}
         <Title level={2} style={{ marginBottom: 8 }}>
-          欢迎回来，{user?.full_name || user?.username}
+          欢迎回来，{user?.username}
         </Title>
         <Text type="secondary" style={{ fontSize: 15, display: 'block', marginBottom: 48 }}>
           请选择要进入的系统

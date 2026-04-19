@@ -58,29 +58,26 @@ export default function AiHomePage() {
     <div className="ai-home-page">
       {/* 顶栏 */}
       <div className="ai-home-topbar">
-        <span className="ai-home-logo">⚡ Traceable</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Button
-            onClick={() => navigate('/')}
-            type="text"
-            style={{ color: 'rgba(255,255,255,0.6)' }}
-          >
-            返回首页
-          </Button>
-          <Button
-            icon={<LogoutOutlined />}
-            onClick={handleLogout}
-            type="text"
-            style={{ color: 'rgba(255,255,255,0.6)' }}
-          >
-            退出登录
-          </Button>
-        </div>
+        <Button
+          onClick={() => navigate('/')}
+          type="text"
+          style={{ color: 'rgba(255,255,255,0.6)' }}
+        >
+          ← 返回首页
+        </Button>
+        <Button
+          icon={<LogoutOutlined />}
+          onClick={handleLogout}
+          type="text"
+          style={{ color: 'rgba(255,255,255,0.6)' }}
+        >
+          退出登录
+        </Button>
       </div>
 
       {/* 标题 */}
       <div className="ai-home-title">
-        <Title level={2}>欢迎，{user?.full_name || user?.username}</Title>
+        <Title level={2}>欢迎，{user?.username}</Title>
         <p>选择一个 AI 智能体开始对话</p>
       </div>
 

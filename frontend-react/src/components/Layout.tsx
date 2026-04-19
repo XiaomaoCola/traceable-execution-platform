@@ -151,7 +151,7 @@ export default function Layout() {
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                 <Avatar size="small" icon={<UserOutlined />} style={{ background: token.colorPrimary }} />
-                <span style={{ fontSize: 13 }}>{user?.full_name || user?.username}</span>
+                <span style={{ fontSize: 13 }}>{user?.username}</span>
               </div>
             </Dropdown>
           </div>
