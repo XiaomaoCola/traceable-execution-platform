@@ -20,6 +20,7 @@ export default function HomePage() {
 
   return (
     <div style={styles.page}>
+      <div style={styles.bg} />
       {/* 右上角退出按钮 */}
       <div style={styles.topBar}>
         <Button
@@ -89,14 +90,27 @@ export default function HomePage() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: '100vh',
-    background: '#f0f2f5',
     display: 'flex',
     flexDirection: 'column',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  bg: {
+    position: 'fixed',
+    inset: 0,
+    backgroundImage: 'url(/backend1.png)',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    filter: 'blur(8px)',
+    transform: 'scale(1.08)',
+    zIndex: 0,
   },
   topBar: {
     display: 'flex',
     justifyContent: 'flex-end',
     padding: '16px 24px',
+    position: 'relative',
+    zIndex: 1,
   },
   content: {
     flex: 1,
@@ -105,6 +119,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     paddingBottom: 80,
+    position: 'relative',
+    zIndex: 1,
   },
   cardRow: {
     display: 'flex',
