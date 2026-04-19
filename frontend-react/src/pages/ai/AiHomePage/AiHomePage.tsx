@@ -1,5 +1,5 @@
 // AI 智能体选择页，路由 /ai。
-// 4 张卡片组成 3D 旋转转盘，鼠标悬停暂停，点击进入对应 Agent 页面。
+// 3 张卡片横排，鼠标悬停有 3D 倾斜效果，点击进入对应 Agent 页面。
 
 import { useNavigate } from 'react-router-dom'
 import { Button, Typography } from 'antd'
@@ -10,40 +10,38 @@ import './AiHomePage.css'
 const { Title } = Typography
 
 interface AgentCard {
-  index: number
   title: string
   desc: string[]
   icon: string
-  color: string   // RGB 值，供 CSS var(--color-card) 使用
+  gradient: string
   path: string
 }
 
 const agents: AgentCard[] = [
   {
-    index: 0,
     title: 'AI 算命师',
     desc: ['生辰八字推算', '今日运势分析', '财运事业占卜'],
     icon: '🔮',
-    color: '255, 180, 50',
+    gradient: 'linear-gradient(43deg, rgb(120, 40, 200) 0%, rgb(200, 80, 192) 46%, rgb(255, 180, 60) 100%)',
     path: '/ai/fortune',
   },
   {
-    index: 1,
     title: 'AI 量化先知',
     desc: ['A 股实时行情', '短期走势分析', '操作建议参考'],
     icon: '📈',
-    color: '50, 200, 120',
+    gradient: 'linear-gradient(43deg, rgb(20, 100, 60) 0%, rgb(50, 180, 100) 46%, rgb(180, 240, 100) 100%)',
     path: '/ai/stock',
   },
   {
-    index: 2,
     title: 'AI 客服机器人',
     desc: ['长期对话记忆', '跨会话上下文', '智能问题解答'],
     icon: '🤖',
-    color: '220, 80, 220',
+    gradient: 'linear-gradient(43deg, rgb(65, 88, 208) 0%, rgb(100, 160, 240) 46%, rgb(180, 220, 255) 100%)',
     path: '/ai/customer-service',
   },
 ]
+
+const TRACKERS = Array.from({ length: 25 }, (_, i) => i + 1)
 
 export default function AiHomePage() {
   const navigate = useNavigate()
@@ -81,33 +79,39 @@ export default function AiHomePage() {
         <p>选择一个 AI 智能体开始对话</p>
       </div>
 
-      {/* 3D 转盘 */}
-      <div className="wrapper">
-        <div className="inner" style={{ '--quantity': agents.length } as React.CSSProperties}>
-          {agents.map((agent) => (
-            <div
-              key={agent.index}
-              className="card"
-              style={{
-                '--index': agent.index,
-                '--color-card': agent.color,
-              } as React.CSSProperties}
-              onClick={() => navigate(agent.path)}
-            >
-              <div className="card-content">
-                <span className="card-icon">{agent.icon}</span>
+      {/* 卡片横排 */}
+      <div className="ai-cards-row">
+        {agents.map((agent, i) => (
+          <div
+            key={i}
+            className="ai-card-container noselect"
+            onClick={() => navigate(agent.path)}
+          >
+            <div className="canvas">
+              {TRACKERS.map(n => (
+                <div key={n} className={`tracker tr-${n}`} />
+              ))}
+              <div className="uiverse-card" style={{ background: agent.gradient }}>
+                <span className="card-icon-center">{agent.icon}</span>
                 <p className="card-title">{agent.title}</p>
-                <p className="card-desc">{agent.desc.join('\n').split('\n').map((line, i) => (
-                  <span key={i}>{line}<br /></span>
-                ))}</p>
-                <p className="card-hint">点击进入 →</p>
+                <p className="card-desc-hover">
+                  {agent.desc.map((line, i) => (
+                    <span key={i} style={{ display: 'block' }}>{line}</span>
+                  ))}
+                </p>
+                <p className="uiverse-prompt">点击进入 →</p>
               </div>
             </div>
-          ))}
+          </div>
+        ))}
+
+        {/* 更多智能体占位 */}
+        <div className="more-card noselect">
+          <span className="more-card-icon">✦</span>
+          <span className="more-card-text">更多智能体</span>
+          <span className="more-card-text" style={{ fontSize: 11, letterSpacing: 0.5 }}>敬请期待…</span>
         </div>
       </div>
-
-      <p className="ai-home-hint">悬停暂停 · 点击进入</p>
     </div>
   )
 }
