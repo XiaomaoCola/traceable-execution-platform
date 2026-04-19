@@ -129,6 +129,25 @@ export default function LoginPage() {
             没有账号？<Link to="/register">去注册</Link>
           </Text>
         </div>
+
+        {/* 作者主页 */}
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <a
+            href="https://zhangrunsu.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: 20,
+              color: '#084955',
+              border: '1px solid #084955',
+              borderRadius: 6,
+              padding: '4px 16px',
+              display: 'inline-block',
+            }}
+          >
+            了解作者 →
+          </a>
+        </div>
       </Card>
     </div>
   )
