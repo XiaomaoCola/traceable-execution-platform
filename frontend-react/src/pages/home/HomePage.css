@@ -1,7 +1,7 @@
 .flip-card {
   background-color: transparent;
-  width: 260px;
-  height: 300px;
+  width: 320px;
+  height: 360px;
   perspective: 1000px;
   font-family: sans-serif;
   cursor: pointer;
@@ -65,20 +65,20 @@
 }
 
 .flip-card-title {
-  font-size: 1.3em;
-  font-weight: 900;
+  font-size: 1.4rem;
+  font-weight: 700;
   margin: 0;
 }
 
 .flip-card-desc {
-  font-size: 0.85em;
+  font-size: 0.9rem;
   opacity: 0.85;
-  line-height: 1.6;
+  line-height: 1.8;
   margin: 0;
 }
 
 .flip-card-hint {
-  font-size: 0.8em;
-  opacity: 0.75;
+  font-size: 0.8rem;
+  opacity: 0.6;
   margin-top: 8px;
 }

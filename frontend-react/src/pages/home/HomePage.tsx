@@ -47,7 +47,7 @@ export default function HomePage() {
           <div className="flip-card" onClick={() => navigate('/tickets')}>
             <div className="flip-card-inner">
               <div className="flip-card-front ticket">
-                <FileTextOutlined style={{ fontSize: 52 }} />
+                <FileTextOutlined style={{ fontSize: 100 }} />
                 <p className="flip-card-title">工单系统</p>
               </div>
               <div className="flip-card-back ticket">
@@ -55,7 +55,7 @@ export default function HomePage() {
                 <p className="flip-card-desc">
                   工单管理<br />
                   资产管理<br />
-                  执行记录
+                  AI工单助手
                 </p>
                 <p className="flip-card-hint">点击进入 →</p>
               </div>
@@ -66,7 +66,7 @@ export default function HomePage() {
           <div className="flip-card" onClick={() => navigate('/ai')}>
             <div className="flip-card-inner">
               <div className="flip-card-front ai">
-                <RobotOutlined style={{ fontSize: 52 }} />
+                <RobotOutlined style={{ fontSize: 100 }} />
                 <p className="flip-card-title">AI 智能体</p>
               </div>
               <div className="flip-card-back ai">
@@ -108,6 +108,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   cardRow: {
     display: 'flex',
-    gap: 32,
+    gap: 100,
   },
 }
