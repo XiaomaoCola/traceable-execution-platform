@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Table, Button, Tag, Space, Typography } from 'antd'
+import { Table, Button, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ticketsApi } from '../../api'
 import type { Ticket, TicketStatus } from '../../types'

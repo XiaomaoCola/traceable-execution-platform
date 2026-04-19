@@ -1,7 +1,7 @@
 // 登录页面，使用 Ant Design 组件库重写。
 // 支持普通登录和游客一键访问（自动使用预设的 guest 账号登录）。
 
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Form, Input, Card, Typography, Divider, Alert } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'

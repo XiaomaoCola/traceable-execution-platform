@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Button, Form, Input, Card, Table, Tag, Typography,
-  Space, Upload, Spin, Alert, Descriptions, Divider,
+  Space, Spin, Alert, Descriptions,
 } from 'antd'
 import { UploadOutlined, RobotOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -13,7 +13,7 @@ import { ticketsApi, artifactsApi, runsApi, workflowsApi } from '../../api'
 import { useAuth } from '../../context/AuthContext'
 import type { Ticket, Artifact, Run, TicketStatus, TicketCreate } from '../../types'
 
-const { Title, Text } = Typography
+const { Title } = Typography
 
 const STATUS_LABEL: Record<TicketStatus, string> = {
   draft: '草稿', submitted: '待审批', approved: '已审批',
