@@ -3,95 +3,96 @@
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Table, Button, Tag, Typography } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { runsApi } from '../../api'
-import type { Run } from '../../types'
+import type { Run, RunType, RunStatus } from '../../types/run'
+
+const { Title } = Typography
+
+const RUN_TYPE_LABEL: Record<RunType, string> = {
+  proof: 'Proof',
+  action: 'Action',
+}
+
+const RUN_TYPE_COLOR: Record<RunType, string> = {
+  proof: 'blue',
+  action: 'orange',
+}
+
+const STATUS_LABEL: Record<RunStatus, string> = {
+  pending: '等待中',
+  running: '执行中',
+  done: '已完成',
+  failed: '失败',
+}
+
+const STATUS_COLOR: Record<RunStatus, string> = {
+  pending: 'default',
+  running: 'orange',
+  done: 'green',
+  failed: 'red',
+}
 
 export default function RunsPage() {
   const navigate = useNavigate()
   const [runs, setRuns] = useState<Run[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
 
   useEffect(() => {
     // 不传 ticketId，拉取当前用户全部 run
     runsApi.list()
       .then(data => setRuns(data))
-      .catch(err => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
 
-  function formatDate(iso: string) {
-    return new Date(iso).toLocaleString('zh-CN')
-  }
+  const columns: ColumnsType<Run> = [
+    { title: 'ID', dataIndex: 'id', width: 80, render: id => `#${id}` },
+    {
+      title: '工单', dataIndex: 'ticket_id', width: 100,
+      render: (id: number) => (
+        <Button type="link" style={{ padding: 0 }} onClick={() => navigate(`/tickets/${id}`)}>
+          #{id}
+        </Button>
+      ),
+    },
+    {
+      title: '类型', dataIndex: 'run_type', width: 100,
+      render: (type: RunType) => (
+        <Tag color={RUN_TYPE_COLOR[type]}>{RUN_TYPE_LABEL[type]}</Tag>
+      ),
+    },
+    {
+      title: '状态', dataIndex: 'status', width: 100,
+      render: (status: RunStatus) => (
+        <Tag color={STATUS_COLOR[status]}>{STATUS_LABEL[status]}</Tag>
+      ),
+    },
+    {
+      title: '创建时间', dataIndex: 'created_at', width: 160,
+      render: (v: string) => new Date(v).toLocaleString('zh-CN'),
+    },
+    {
+      title: '操作', width: 100,
+      render: (_, record) => (
+        <Button type="link" onClick={() => navigate(`/runs/${record.id}`)}>
+          查看日志
+        </Button>
+      ),
+    },
+  ]
 
   return (
     <div>
-      <div className="page-header">
-        <h2 className="page-title">运行记录</h2>
-      </div>
+      <Title level={4} style={{ marginBottom: 16 }}>运行记录</Title>
 
-      <div className="card">
-        {loading && <div className="loading">加载中...</div>}
-        {error && <div className="card__body form-error">{error}</div>}
-
-        {!loading && !error && (
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>工单</th>
-                  <th>类型</th>
-                  <th>状态</th>
-                  <th>创建时间</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {runs.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="empty">暂无运行记录</td>
-                  </tr>
-                ) : (
-                  runs.map(run => (
-                    <tr key={run.id}>
-                      <td>#{run.id}</td>
-                      <td>
-                        {/* 点击工单 ID 可跳转到对应工单详情 */}
-                        <span
-                          className="link"
-                          onClick={() => navigate(`/tickets/${run.ticket_id}`)}
-                        >
-                          #{run.ticket_id}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`badge badge--${run.run_type}`}>
-                          {run.run_type === 'proof' ? 'Proof' : 'Action'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`badge badge--${run.status}`}>
-                          {run.status}
-                        </span>
-                      </td>
-                      <td>{formatDate(run.created_at)}</td>
-                      <td>
-                        <span
-                          className="link"
-                          onClick={() => navigate(`/runs/${run.id}`)}
-                        >
-                          查看日志
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <Table
+        rowKey="id"
+        dataSource={runs}
+        columns={columns}
+        loading={loading}
+        pagination={{ pageSize: 10 }}
+      />
     </div>
   )
 }
