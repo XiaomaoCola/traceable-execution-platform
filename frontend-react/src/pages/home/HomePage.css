@@ -82,3 +82,32 @@
   opacity: 0.6;
   margin-top: 8px;
 }
+
+/* 卡片横排容器 */
+.home-card-row {
+  display: flex;
+  gap: 100px;
+}
+
+/* ── 响应式适配 ──────────────────────────────────────────── */
+@media (max-width: 780px) {
+  .home-card-row {
+    gap: 32px;
+  }
+  .flip-card {
+    width: 240px;
+    height: 300px;
+  }
+}
+
+@media (max-width: 560px) {
+  .home-card-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+  .flip-card {
+    width: 280px;
+    height: 300px;
+  }
+}

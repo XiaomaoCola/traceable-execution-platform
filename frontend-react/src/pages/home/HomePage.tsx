@@ -43,7 +43,7 @@ export default function HomePage() {
         </Text>
 
         {/* 翻转卡片入口 */}
-        <div style={styles.cardRow}>
+        <div className="home-card-row">
           {/* 工单系统 */}
           <div className="flip-card" onClick={() => navigate('/tickets')}>
             <div className="flip-card-inner">
@@ -121,9 +121,5 @@ const styles: Record<string, React.CSSProperties> = {
     paddingBottom: 80,
     position: 'relative',
     zIndex: 1,
-  },
-  cardRow: {
-    display: 'flex',
-    gap: 100,
   },
 }
