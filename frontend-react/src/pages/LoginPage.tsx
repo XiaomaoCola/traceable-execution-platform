@@ -36,7 +36,7 @@ export default function LoginPage() {
     setGuestLoading(true)
     setErrorMsg('')
     try {
-      await login('guest', 'guest123')
+      await login('游客', 'guest123')
       navigate('/')
     } catch (err: unknown) {
       setErrorMsg('游客登录失败，请联系管理员')
@@ -129,6 +129,25 @@ export default function LoginPage() {
             没有账号？<Link to="/register">去注册</Link>
           </Text>
         </div>
+
+        {/* 作者主页 */}
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <a
+            href="https://zhangrunsu.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: 20,
+              color: '#084955',
+              border: '1px solid #084955',
+              borderRadius: 6,
+              padding: '4px 16px',
+              display: 'inline-block',
+            }}
+          >
+            了解作者 →
+          </a>
+        </div>
       </Card>
     </div>
   )
@@ -140,12 +159,19 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#f0f2f5',
+    backgroundImage: 'url(/backend1.png)',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
   },
   card: {
     width: 400,
-    boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
-    borderRadius: 8,
+    background: 'rgba(255, 255, 255, 0.55)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.18)',
+    borderRadius: 16,
+    border: '1px solid rgba(255, 255, 255, 0.4)',
     padding: '8px 8px',
   },
   header: {

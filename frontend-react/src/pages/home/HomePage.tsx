@@ -20,6 +20,7 @@ export default function HomePage() {
 
   return (
     <div style={styles.page}>
+      <div style={styles.bg} />
       {/* 右上角退出按钮 */}
       <div style={styles.topBar}>
         <Button
@@ -35,7 +36,7 @@ export default function HomePage() {
       <div style={styles.content}>
         {/* 欢迎语 */}
         <Title level={2} style={{ marginBottom: 8 }}>
-          欢迎回来，{user?.full_name || user?.username}
+          欢迎回来，{user?.username}
         </Title>
         <Text type="secondary" style={{ fontSize: 15, display: 'block', marginBottom: 48 }}>
           请选择要进入的系统
@@ -47,7 +48,7 @@ export default function HomePage() {
           <div className="flip-card" onClick={() => navigate('/tickets')}>
             <div className="flip-card-inner">
               <div className="flip-card-front ticket">
-                <FileTextOutlined style={{ fontSize: 52 }} />
+                <FileTextOutlined style={{ fontSize: 100 }} />
                 <p className="flip-card-title">工单系统</p>
               </div>
               <div className="flip-card-back ticket">
@@ -55,7 +56,7 @@ export default function HomePage() {
                 <p className="flip-card-desc">
                   工单管理<br />
                   资产管理<br />
-                  执行记录
+                  AI工单助手
                 </p>
                 <p className="flip-card-hint">点击进入 →</p>
               </div>
@@ -66,7 +67,7 @@ export default function HomePage() {
           <div className="flip-card" onClick={() => navigate('/ai')}>
             <div className="flip-card-inner">
               <div className="flip-card-front ai">
-                <RobotOutlined style={{ fontSize: 52 }} />
+                <RobotOutlined style={{ fontSize: 100 }} />
                 <p className="flip-card-title">AI 智能体</p>
               </div>
               <div className="flip-card-back ai">
@@ -89,14 +90,27 @@ export default function HomePage() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: '100vh',
-    background: '#f0f2f5',
     display: 'flex',
     flexDirection: 'column',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  bg: {
+    position: 'fixed',
+    inset: 0,
+    backgroundImage: 'url(/backend1.png)',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    filter: 'blur(8px)',
+    transform: 'scale(1.08)',
+    zIndex: 0,
   },
   topBar: {
     display: 'flex',
     justifyContent: 'flex-end',
     padding: '16px 24px',
+    position: 'relative',
+    zIndex: 1,
   },
   content: {
     flex: 1,
@@ -105,9 +119,11 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     paddingBottom: 80,
+    position: 'relative',
+    zIndex: 1,
   },
   cardRow: {
     display: 'flex',
-    gap: 32,
+    gap: 100,
   },
 }

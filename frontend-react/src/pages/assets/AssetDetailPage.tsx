@@ -3,40 +3,34 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import {
+  Button, Form, Input, Card, Typography,
+  Space, Spin, Alert, Descriptions,
+} from 'antd'
 import { assetsApi } from '../../api'
 import type { Asset, AssetCreate } from '../../types'
+
+const { Title } = Typography
 
 export default function AssetDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [form] = Form.useForm<AssetCreate>()
 
   const isNew = id === 'new'
 
   const [asset, setAsset] = useState<Asset | null>(null)
   const [loading, setLoading] = useState(!isNew)
+  const [editing, setEditing] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  // editing 控制是否进入编辑模式（只在详情页显示编辑按钮）
-  const [editing, setEditing] = useState(false)
-
-  // 表单字段，创建时初始为空，编辑时从 asset 填充
-  const [form, setForm] = useState<AssetCreate>({
-    name: '',
-    asset_type: '',
-    serial_number: '',
-    location: '',
-    description: '',
-  })
-  const [submitting, setSubmitting] = useState(false)
-
-  // 加载资产详情（仅详情模式）
   useEffect(() => {
     if (isNew) return
     assetsApi.get(Number(id))
       .then(data => {
         setAsset(data)
-        // 把已有数据填入表单，便于编辑时使用
-        setForm({
+        form.setFieldsValue({
           name: data.name,
           asset_type: data.asset_type,
           serial_number: data.serial_number ?? '',
@@ -46,14 +40,13 @@ export default function AssetDetailPage() {
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
-  }, [id, isNew])
+  }, [id, isNew, form])
 
   // 创建新资产
-  async function handleCreate() {
-    if (!form.name.trim() || !form.asset_type.trim()) return
+  async function handleCreate(values: AssetCreate) {
     setSubmitting(true)
     try {
-      const created = await assetsApi.create(form)
+      const created = await assetsApi.create(values)
       navigate(`/assets/${created.id}`)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '创建失败')
@@ -63,11 +56,11 @@ export default function AssetDetailPage() {
   }
 
   // 保存编辑（PATCH）
-  async function handleSave() {
+  async function handleSave(values: AssetCreate) {
     if (!asset) return
     setSubmitting(true)
     try {
-      const updated = await assetsApi.update(asset.id, form)
+      const updated = await assetsApi.update(asset.id, values)
       setAsset(updated)
       setEditing(false)
     } catch (err: unknown) {
@@ -77,8 +70,16 @@ export default function AssetDetailPage() {
     }
   }
 
-  function formatDate(iso: string) {
-    return new Date(iso).toLocaleString('zh-CN')
+  function handleCancelEdit() {
+    if (!asset) return
+    form.setFieldsValue({
+      name: asset.name,
+      asset_type: asset.asset_type,
+      serial_number: asset.serial_number ?? '',
+      location: asset.location ?? '',
+      description: asset.description ?? '',
+    })
+    setEditing(false)
   }
 
   // ── 创建模式 ────────────────────────────────────────────────────────────
@@ -86,217 +87,99 @@ export default function AssetDetailPage() {
   if (isNew) {
     return (
       <div>
-        <div className="page-header">
-          <h2 className="page-title">新建资产</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <Title level={4} style={{ margin: 0 }}>新建资产</Title>
+          <Button onClick={() => navigate('/assets')}>返回列表</Button>
         </div>
 
-        <div className="card">
-          <div className="card__body">
-            <div className="form">
-              <div className="form-field">
-                <label>名称 <span className="required">*</span></label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="例如：核心交换机-01"
-                />
-              </div>
-
-              <div className="form-field">
-                <label>类型 <span className="required">*</span></label>
-                <input
-                  type="text"
-                  value={form.asset_type}
-                  onChange={e => setForm(f => ({ ...f, asset_type: e.target.value }))}
-                  placeholder="例如：switch / router"
-                />
-              </div>
-
-              <div className="form-field">
-                <label>序列号</label>
-                <input
-                  type="text"
-                  value={form.serial_number}
-                  onChange={e => setForm(f => ({ ...f, serial_number: e.target.value }))}
-                  placeholder="设备序列号（可选）"
-                />
-              </div>
-
-              <div className="form-field">
-                <label>位置</label>
-                <input
-                  type="text"
-                  value={form.location}
-                  onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                  placeholder="机房位置（可选）"
-                />
-              </div>
-
-              <div className="form-field">
-                <label>描述</label>
-                <textarea
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="资产描述（可选）"
-                />
-              </div>
-
-              {error && <p className="form-error">{error}</p>}
-
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button
-                  className="btn btn--primary"
-                  onClick={handleCreate}
-                  disabled={submitting || !form.name.trim() || !form.asset_type.trim()}
-                >
-                  {submitting ? '提交中...' : '创建资产'}
-                </button>
-                <button
-                  className="btn btn--secondary"
-                  onClick={() => navigate('/assets')}
-                >
-                  取消
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card>
+          {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
+          <Form form={form} layout="vertical" onFinish={handleCreate} style={{ maxWidth: 600 }}>
+            <Form.Item name="name" label="名称" rules={[{ required: true, message: '请输入资产名称' }]}>
+              <Input placeholder="例如：核心交换机-01" />
+            </Form.Item>
+            <Form.Item name="asset_type" label="类型" rules={[{ required: true, message: '请输入资产类型' }]}>
+              <Input placeholder="例如：switch / router" />
+            </Form.Item>
+            <Form.Item name="serial_number" label="序列号">
+              <Input placeholder="设备序列号（可选）" />
+            </Form.Item>
+            <Form.Item name="location" label="位置">
+              <Input placeholder="机房位置（可选）" />
+            </Form.Item>
+            <Form.Item name="description" label="描述">
+              <Input.TextArea rows={4} placeholder="资产描述（可选）" />
+            </Form.Item>
+            <Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit" loading={submitting}>创建资产</Button>
+                <Button onClick={() => navigate('/assets')}>取消</Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Card>
       </div>
     )
   }
 
   // ── 详情模式 ────────────────────────────────────────────────────────────
 
-  if (loading) return <div className="loading">加载中...</div>
-  if (error && !asset) return <div className="form-error">{error}</div>
+  if (loading) return <Spin size="large" style={{ display: 'block', marginTop: 80, textAlign: 'center' }} />
+  if (error && !asset) return <Alert message="加载失败" description={error} type="error" showIcon style={{ margin: 24 }} />
   if (!asset) return null
 
   return (
     <div>
-      <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <h2 className="page-title">资产 #{asset.id}</h2>
-        </div>
-        <button className="btn btn--secondary" onClick={() => navigate('/assets')}>
-          返回列表
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={4} style={{ margin: 0 }}>资产 #{asset.id}</Title>
+        <Button onClick={() => navigate('/assets')}>返回列表</Button>
       </div>
 
-      {error && <p className="form-error" style={{ marginBottom: 12 }}>{error}</p>}
+      {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
 
-      <div className="card">
-        <div className="card__header">
-          <span className="card__title">基本信息</span>
-          {/* 切换编辑模式 */}
-          {!editing ? (
-            <button className="btn btn--secondary btn--sm" onClick={() => setEditing(true)}>
-              编辑
-            </button>
+      <Card
+        title="基本信息"
+        extra={
+          !editing ? (
+            <Button size="small" onClick={() => setEditing(true)}>编辑</Button>
           ) : (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                className="btn btn--primary btn--sm"
-                onClick={handleSave}
-                disabled={submitting}
-              >
-                {submitting ? '保存中...' : '保存'}
-              </button>
-              <button
-                className="btn btn--secondary btn--sm"
-                onClick={() => {
-                  setEditing(false)
-                  // 取消时把表单重置回原始值
-                  setForm({
-                    name: asset.name,
-                    asset_type: asset.asset_type,
-                    serial_number: asset.serial_number ?? '',
-                    location: asset.location ?? '',
-                    description: asset.description ?? '',
-                  })
-                }}
-              >
-                取消
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="card__body">
-          {editing ? (
-            // 编辑态：内联表单
-            <div className="form">
-              <div className="form-field">
-                <label>名称 <span className="required">*</span></label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                />
-              </div>
-              <div className="form-field">
-                <label>类型 <span className="required">*</span></label>
-                <input
-                  type="text"
-                  value={form.asset_type}
-                  onChange={e => setForm(f => ({ ...f, asset_type: e.target.value }))}
-                />
-              </div>
-              <div className="form-field">
-                <label>序列号</label>
-                <input
-                  type="text"
-                  value={form.serial_number}
-                  onChange={e => setForm(f => ({ ...f, serial_number: e.target.value }))}
-                />
-              </div>
-              <div className="form-field">
-                <label>位置</label>
-                <input
-                  type="text"
-                  value={form.location}
-                  onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                />
-              </div>
-              <div className="form-field">
-                <label>描述</label>
-                <textarea
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                />
-              </div>
-            </div>
-          ) : (
-            // 只读态：detail-grid 展示
-            <div className="detail-grid">
-              <div className="detail-item">
-                <span className="detail-label">名称</span>
-                <span>{asset.name}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">类型</span>
-                <span>{asset.asset_type}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">序列号</span>
-                <span>{asset.serial_number || '—'}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">位置</span>
-                <span>{asset.location || '—'}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">描述</span>
-                <span>{asset.description || '—'}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">创建时间</span>
-                <span>{formatDate(asset.created_at)}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+            <Space>
+              <Button type="primary" size="small" loading={submitting} onClick={() => form.submit()}>保存</Button>
+              <Button size="small" onClick={handleCancelEdit}>取消</Button>
+            </Space>
+          )
+        }
+      >
+        {editing ? (
+          <Form form={form} layout="vertical" onFinish={handleSave} style={{ maxWidth: 600 }}>
+            <Form.Item name="name" label="名称" rules={[{ required: true, message: '请输入资产名称' }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="asset_type" label="类型" rules={[{ required: true, message: '请输入资产类型' }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="serial_number" label="序列号">
+              <Input />
+            </Form.Item>
+            <Form.Item name="location" label="位置">
+              <Input />
+            </Form.Item>
+            <Form.Item name="description" label="描述">
+              <Input.TextArea rows={4} />
+            </Form.Item>
+          </Form>
+        ) : (
+          <Descriptions column={2}>
+            <Descriptions.Item label="名称">{asset.name}</Descriptions.Item>
+            <Descriptions.Item label="类型">{asset.asset_type}</Descriptions.Item>
+            <Descriptions.Item label="序列号">{asset.serial_number || '—'}</Descriptions.Item>
+            <Descriptions.Item label="位置">{asset.location || '—'}</Descriptions.Item>
+            <Descriptions.Item label="描述">{asset.description || '—'}</Descriptions.Item>
+            <Descriptions.Item label="创建时间">{new Date(asset.created_at).toLocaleString('zh-CN')}</Descriptions.Item>
+            <Descriptions.Item label="更新时间">{new Date(asset.updated_at).toLocaleString('zh-CN')}</Descriptions.Item>
+          </Descriptions>
+        )}
+      </Card>
     </div>
   )
 }
