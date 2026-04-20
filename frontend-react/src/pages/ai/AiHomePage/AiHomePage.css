@@ -174,17 +174,21 @@
   pointer-events: none;
 }
 
-/* Hover: 标题和图标淡出，描述淡入 */
+/* Hover / active: 标题和图标淡出，描述淡入 */
 .ai-card-container:hover .card-title,
-.ai-card-container:hover .card-icon-center {
+.ai-card-container:hover .card-icon-center,
+.ai-card-container.active .card-title,
+.ai-card-container.active .card-icon-center {
   opacity: 0;
 }
 
-.ai-card-container:hover .card-desc-hover {
+.ai-card-container:hover .card-desc-hover,
+.ai-card-container.active .card-desc-hover {
   opacity: 1;
 }
 
-.ai-card-container:hover .uiverse-prompt {
+.ai-card-container:hover .uiverse-prompt,
+.ai-card-container.active .uiverse-prompt {
   opacity: 0;
 }
 
