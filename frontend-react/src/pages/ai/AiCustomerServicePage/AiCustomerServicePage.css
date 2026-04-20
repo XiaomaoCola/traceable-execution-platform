@@ -1,0 +1,13 @@
+/* 客服机器人主题：深蓝科技风 */
+.theme-customer {
+  --page-bg: linear-gradient(135deg, #020b18, #071a2e, #020b18);
+  --accent: #4da6ff;
+  --accent-rgb: 77, 166, 255;
+  --text: #dff0ff;
+  --text-muted: #6a9bbf;
+  --title-gradient: linear-gradient(90deg, #4da6ff, #00d4ff);
+  --btn-gradient: linear-gradient(135deg, #4da6ff, #0066cc);
+  --answer-border: #4da6ff;
+  --answer-bg: rgba(77, 166, 255, 0.07);
+  --answer-color: #cce8ff;
+}
