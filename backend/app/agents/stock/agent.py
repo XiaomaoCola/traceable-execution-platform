@@ -35,56 +35,72 @@ async def generate(message: str) -> AsyncGenerator[str, None]:
     try:
         async with httpx.AsyncClient(timeout=120.0, trust_env=False) as client:
             for _ in range(8):
-                tool_calls_acc: dict[int, dict] = {}
+                tool_calls_accumulator: dict[int, dict] = {}
 
                 async with client.stream(
                     "POST", OLLAMA_URL,
                     json={"model": MODEL, "messages": messages, "tools": TOOLS, "stream": True},
-                ) as resp:
-                    resp.raise_for_status()
-                    async for line in resp.aiter_lines():
+                ) as respond:
+                    respond.raise_for_status()
+                    # .raise_for_status 的意思是  检查这次 HTTP 请求是否成功。
+                    async for line in respond.aiter_lines():
+                    # aiter_lines() 的意思是 ， 从服务器返回的数据流里，一行一行地“异步读取”。
                         if not line.startswith("data: "):
+                        # 只处理以  “data:”  开头的 SSE 数据行，别的行跳过。
                             continue
+                            # 直接跳过这一轮循环，进入下一轮。
                         data = line[6:]
+                        # 因为 "data: " 一共 6 个字符，所以需要把这6个字符切掉，只保留真正的内容。
                         if data.strip() == "[DONE]":
                             break
+                            # 跳出循环。
                         try:
                             chunk = json.loads(data)
                         except json.JSONDecodeError:
                             continue
 
                         delta = chunk.get("choices", [{}])[0].get("delta", {})
+                        # .get() 是 dict（字典）的安全取值方法。 例子：
+                        # chunk["choices"] 如果key不存在的话，就会报错；
+                        # chunk.get("choices") 如果key不存在，只会返回None；
+                        # chunk.get("choices", [{}]) 这是带默认值的写法， 如果key不存在，返回默认值。
+                        # "choices": [ {...}, {...} ] ， 一般只用第一个，所以用[0]。
 
                         content = delta.get("content") or ""
                         if content:
                             got_text = True
                             yield sse({"type": "text_chunk", "content": content})
 
-                        for tc in delta.get("tool_calls") or []:
-                            idx = tc.get("index", 0)
-                            if idx not in tool_calls_acc:
-                                tool_calls_acc[idx] = {"id": "", "name": "", "arguments": ""}
-                            if tc.get("id"):
-                                tool_calls_acc[idx]["id"] = tc["id"]
-                            fn = tc.get("function", {})
-                            if fn.get("name"):
-                                tool_calls_acc[idx]["name"] += fn["name"]
-                            if fn.get("arguments"):
-                                tool_calls_acc[idx]["arguments"] += fn["arguments"]
+                        for tool_call in delta.get("tool_calls") or []:
+                        # tool_calls的value是 list， 比如
+                        # "tool_calls": [
+                        # { "index": 0, "function": { "name": "get_stock", "arguments": "{AAPL}" } },
+                        # { "index": 1, "function": { "name": "get_stock", "arguments": "{TSLA}" } } ]
+                            index = tool_call.get("index", 0)
+                            if index not in tool_calls_accumulator:
+                            # d = { 3: "hello" } 这个字典里， 3 in d 这个判断是 True。
+                                tool_calls_accumulator[index] = {"id": "", "name": "", "arguments": ""}
+                            if tool_call.get("id"):
+                                tool_calls_accumulator[index]["id"] = tool_call["id"]
+                            function_call = tool_call.get("function", {})
+                            if function_call.get("name"):
+                                tool_calls_accumulator[index]["name"] += function_call["name"]
+                            if function_call.get("arguments"):
+                                tool_calls_accumulator[index]["arguments"] += function_call["arguments"]
 
-                if not tool_calls_acc:
+                if not tool_calls_accumulator:
                     break
 
                 tool_calls_list = [
                     {
-                        "id": tool_calls_acc[i]["id"],
+                        "id": tool_calls_accumulator[i]["id"],
                         "type": "function",
                         "function": {
-                            "name": tool_calls_acc[i]["name"],
-                            "arguments": tool_calls_acc[i]["arguments"],
+                            "name": tool_calls_accumulator[i]["name"],
+                            "arguments": tool_calls_accumulator[i]["arguments"],
                         },
                     }
-                    for i in sorted(tool_calls_acc)
+                    for i in sorted(tool_calls_accumulator)
                 ]
 
                 messages.append({
@@ -93,10 +109,10 @@ async def generate(message: str) -> AsyncGenerator[str, None]:
                     "tool_calls": tool_calls_list,
                 })
 
-                for tc in tool_calls_list:
-                    name = tc["function"]["name"]
+                for tool_call in tool_calls_list:
+                    name = tool_call["function"]["name"]
                     try:
-                        args = json.loads(tc["function"]["arguments"])
+                        args = json.loads(tool_call["function"]["arguments"])
                     except json.JSONDecodeError:
                         args = {}
 
@@ -106,7 +122,7 @@ async def generate(message: str) -> AsyncGenerator[str, None]:
 
                     messages.append({
                         "role": "tool",
-                        "tool_call_id": tc["id"],
+                        "tool_call_id": tool_call["id"],
                         "content": result,
                     })
 
@@ -116,9 +132,9 @@ async def generate(message: str) -> AsyncGenerator[str, None]:
                 async with client.stream(
                     "POST", OLLAMA_URL,
                     json={"model": MODEL, "messages": messages, "stream": True},
-                ) as resp:
-                    resp.raise_for_status()
-                    async for line in resp.aiter_lines():
+                ) as respond:
+                    respond.raise_for_status()
+                    async for line in respond.aiter_lines():
                         if not line.startswith("data: "):
                             continue
                         data = line[6:]
