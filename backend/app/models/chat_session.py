@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Text, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 
 from backend.app.db.base import Base, IDMixin, TimestampMixin
 
@@ -50,6 +51,9 @@ class ChatMessage(Base, IDMixin, TimestampMixin):
     role = Column(String(20), nullable=False)
 
     content = Column(Text, nullable=False)
+
+    # nomic-embed-text 输出 768 维，旧消息为 NULL
+    embedding = Column(Vector(768), nullable=True)
 
     session = relationship("ChatSession", back_populates="messages")
 
