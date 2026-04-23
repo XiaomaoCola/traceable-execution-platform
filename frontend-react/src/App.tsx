@@ -24,7 +24,7 @@ import AiFortunePage from './pages/ai/AiFortunePage/AiFortunePage'
 import AiStockPage from './pages/ai/AiStockPage/AiStockPage'
 import AiTicketPage from './pages/ai/AiTicketPage'
 // 客服机器人：需要登录，后端按用户 ID 维护长期对话记忆
-import AiCustomerServicePage from './pages/ai/AiCustomerServicePage'
+import AiCustomerServicePage from './pages/ai/AiCustomerServicePage/AiCustomerServicePage'
 
 const router = createBrowserRouter([
   // ── 公开页面 ────────────────────────────────────────────────────────────

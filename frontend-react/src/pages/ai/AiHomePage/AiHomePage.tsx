@@ -1,6 +1,7 @@
 // AI 智能体选择页，路由 /ai。
 // 3 张卡片横排，鼠标悬停有 3D 倾斜效果，点击进入对应 Agent 页面。
 
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Typography } from 'antd'
 import { LogoutOutlined } from '@ant-design/icons'
@@ -46,10 +47,24 @@ const TRACKERS = Array.from({ length: 25 }, (_, i) => i + 1)
 export default function AiHomePage() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const [active, setActive] = useState<number | null>(null)
 
   function handleLogout() {
     logout()
     navigate('/login')
+  }
+
+  function handleCardClick(i: number, path: string) {
+    const isTouch = window.matchMedia('(hover: none)').matches
+    if (!isTouch) {
+      navigate(path)
+      return
+    }
+    if (active === i) {
+      navigate(path)
+    } else {
+      setActive(i)
+    }
   }
 
   return (
@@ -84,8 +99,8 @@ export default function AiHomePage() {
         {agents.map((agent, i) => (
           <div
             key={i}
-            className="ai-card-container noselect"
-            onClick={() => navigate(agent.path)}
+            className={`ai-card-container noselect${active === i ? ' active' : ''}`}
+            onClick={() => handleCardClick(i, agent.path)}
           >
             <div className="canvas">
               {TRACKERS.map(n => (

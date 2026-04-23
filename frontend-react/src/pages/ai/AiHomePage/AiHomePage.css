@@ -174,17 +174,21 @@
   pointer-events: none;
 }
 
-/* Hover: 标题和图标淡出，描述淡入 */
+/* Hover / active: 标题和图标淡出，描述淡入 */
 .ai-card-container:hover .card-title,
-.ai-card-container:hover .card-icon-center {
+.ai-card-container:hover .card-icon-center,
+.ai-card-container.active .card-title,
+.ai-card-container.active .card-icon-center {
   opacity: 0;
 }
 
-.ai-card-container:hover .card-desc-hover {
+.ai-card-container:hover .card-desc-hover,
+.ai-card-container.active .card-desc-hover {
   opacity: 1;
 }
 
-.ai-card-container:hover .uiverse-prompt {
+.ai-card-container:hover .uiverse-prompt,
+.ai-card-container.active .uiverse-prompt {
   opacity: 0;
 }
 
@@ -254,4 +258,64 @@
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+/* ── 响应式适配 ──────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .ai-cards-row {
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 0 20px;
+  }
+  .ai-card-container,
+  .more-card {
+    width: 180px;
+    height: 250px;
+  }
+}
+
+@media (max-width: 600px) {
+  .ai-home-page {
+    padding-top: 72px;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+  .ai-home-title {
+    margin-bottom: 28px;
+  }
+  .ai-home-title h2 {
+    font-size: 20px !important;
+  }
+  .ai-cards-row {
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 0 16px 32px;
+    justify-content: center;
+  }
+  .ai-card-container,
+  .more-card {
+    width: 150px;
+    height: 210px;
+  }
+  .card-icon-center {
+    font-size: 48px;
+  }
+  .card-title {
+    font-size: 16px;
+  }
+  .card-desc-hover {
+    font-size: 12px;
+    line-height: 2;
+  }
+  .uiverse-prompt {
+    font-size: 13px;
+    bottom: 10px;
+  }
+  .more-card-icon {
+    font-size: 26px;
+  }
+  .more-card-text {
+    font-size: 11px;
+  }
 }

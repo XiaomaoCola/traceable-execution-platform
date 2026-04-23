@@ -1,6 +1,7 @@
 // 系统选择首页，登录后的第一个页面，不带侧边栏。
 // 鼠标悬停卡片触发翻转，正面显示图标，背面显示功能介绍，点击进入对应系统。
 
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Typography, Button } from 'antd'
 import { FileTextOutlined, RobotOutlined, LogoutOutlined } from '@ant-design/icons'
@@ -12,10 +13,24 @@ const { Title, Text } = Typography
 export default function HomePage() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const [flipped, setFlipped] = useState<string | null>(null)
 
   function handleLogout() {
     logout()
     navigate('/login')
+  }
+
+  function handleCardClick(key: string, path: string) {
+    const isTouch = window.matchMedia('(hover: none)').matches
+    if (!isTouch) {
+      navigate(path)
+      return
+    }
+    if (flipped === key) {
+      navigate(path)
+    } else {
+      setFlipped(key)
+    }
   }
 
   return (
@@ -43,9 +58,9 @@ export default function HomePage() {
         </Text>
 
         {/* 翻转卡片入口 */}
-        <div style={styles.cardRow}>
+        <div className="home-card-row">
           {/* 工单系统 */}
-          <div className="flip-card" onClick={() => navigate('/tickets')}>
+          <div className={`flip-card${flipped === 'tickets' ? ' flipped' : ''}`} onClick={() => handleCardClick('tickets', '/tickets')}>
             <div className="flip-card-inner">
               <div className="flip-card-front ticket">
                 <FileTextOutlined style={{ fontSize: 100 }} />
@@ -64,7 +79,7 @@ export default function HomePage() {
           </div>
 
           {/* AI 助手 */}
-          <div className="flip-card" onClick={() => navigate('/ai')}>
+          <div className={`flip-card${flipped === 'ai' ? ' flipped' : ''}`} onClick={() => handleCardClick('ai', '/ai')}>
             <div className="flip-card-inner">
               <div className="flip-card-front ai">
                 <RobotOutlined style={{ fontSize: 100 }} />
@@ -121,9 +136,5 @@ const styles: Record<string, React.CSSProperties> = {
     paddingBottom: 80,
     position: 'relative',
     zIndex: 1,
-  },
-  cardRow: {
-    display: 'flex',
-    gap: 100,
   },
 }
