@@ -1,8 +1,16 @@
-from sqlalchemy import Column, String, Text, ForeignKey, Integer, UniqueConstraint
+import enum
+
+from sqlalchemy import Column, String, Text, ForeignKey, Integer, UniqueConstraint, Enum
 from sqlalchemy.orm import relationship
 from pgvector.sqlalchemy import Vector
 
 from backend.app.db.base import Base, IDMixin, TimestampMixin
+
+
+class MessageRole(str, enum.Enum):
+    user = "user"
+    assistant = "assistant"
+    system = "system"
 
 
 class ChatSession(Base, IDMixin, TimestampMixin):
@@ -47,8 +55,7 @@ class ChatMessage(Base, IDMixin, TimestampMixin):
 
     session_id = Column(Integer, ForeignKey("chat_sessions.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    # 'user' | 'assistant' | 'system'
-    role = Column(String(20), nullable=False)
+    role = Column(Enum(MessageRole), nullable=False)
 
     content = Column(Text, nullable=False)
 

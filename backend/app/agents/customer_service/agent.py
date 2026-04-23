@@ -10,7 +10,7 @@ from sqlalchemy import select
 from backend.app.agents.utils import sse
 from backend.app.agents.customer_service.prompts import SYSTEM_PROMPT
 from backend.app.db.session import AsyncSessionLocal
-from backend.app.models.chat_session import ChatSession, ChatMessage
+from backend.app.models.chat_session import ChatSession, ChatMessage, MessageRole
 
 OLLAMA_BASE_URL = "http://host.docker.internal:11434"
 MODEL = "llama3.1:8b"
@@ -25,6 +25,7 @@ _embeddings = OllamaEmbeddings(model=EMBED_MODEL, base_url=OLLAMA_BASE_URL)
 
 
 async def _embed(text: str) -> list[float]:
+# 把 一句话 转换成 embedding 向量。
     return await _embeddings.aembed_query(text)
 
 
@@ -47,7 +48,7 @@ async def _get_or_create_session(user_id: int) -> ChatSession:
 
 async def _retrieve_context(session_db_id: int, query: str) -> list[ChatMessage]:
     """向量检索语义相关消息 + 最近消息兜底，合并去重后按时间排序。"""
-    query_vec = await _embed(query)
+    query_embedding = await _embed(query)
 
     async with AsyncSessionLocal() as db:
         # 语义相似度检索（余弦距离 <=>，越小越相似）
@@ -55,10 +56,15 @@ async def _retrieve_context(session_db_id: int, query: str) -> list[ChatMessage]
             select(ChatMessage)
             .where(ChatMessage.session_id == session_db_id)
             .where(ChatMessage.embedding.isnot(None))
-            .order_by(ChatMessage.embedding.op("<=>")(query_vec))
+            # 只查那些 embedding 不为空 的消息。
+            .order_by(ChatMessage.embedding.op("<=>")(query_embedding))
+            # 跟 query_embedding 比较距离。
             .limit(TOP_K_SEMANTIC)
+            # 只取前 TOP_K_SEMANTIC 条结果。
         )
-        semantic_msgs = semantic_result.scalars().all()
+        semantic_messages = semantic_result.scalars().all()
+        # .all 的意思是 ： 一次性全部拿出来，变成 Python 列表, 大概样子如下
+        # semantic_messages = [ChatMessage(...),ChatMessage(...),ChatMessage(...)] 。
 
         # 最近 N 条兜底，保证上下文连贯
         recent_result = await db.execute(
@@ -67,17 +73,20 @@ async def _retrieve_context(session_db_id: int, query: str) -> list[ChatMessage]
             .order_by(ChatMessage.created_at.desc())
             .limit(RECENT_FALLBACK)
         )
-        recent_msgs = list(reversed(recent_result.scalars().all()))
+        recent_messages = list(reversed(recent_result.scalars().all()))
 
     # 合并去重，按时间排序
     seen: set[int] = set()
     merged: list[ChatMessage] = []
-    for msg in recent_msgs + list(semantic_msgs):
-        if msg.id not in seen:
-            seen.add(msg.id)
-            merged.append(msg)
+    for message in recent_messages + list(semantic_messages):
+    # list的可加性。 例子： [1, 2] + [2, 3] = [1, 2, 2, 3]
+        if message.id not in seen:
+            seen.add(message.id)
+            merged.append(message)
 
     merged.sort(key=lambda m: m.created_at)
+    # .sort 是修改原列表（更省内存）, 对 merged用完  .sort 之后，merged已经变成新的了。
+    #  key=lambda m: m.created_at， 排序的时候，按每个元素的 created_at 来排序。
     return merged
 
 
@@ -90,13 +99,13 @@ async def _save_messages(session_db_id: int, user_content: str, assistant_conten
     async with AsyncSessionLocal() as db:
         db.add(ChatMessage(
             session_id=session_db_id,
-            role="user",
+            role=MessageRole.user,
             content=user_content,
             embedding=user_vec,
         ))
         db.add(ChatMessage(
             session_id=session_db_id,
-            role="assistant",
+            role=MessageRole.assistant,
             content=assistant_content,
             embedding=assistant_vec,
         ))
@@ -114,17 +123,17 @@ async def generate(user_id: int, message: str) -> AsyncGenerator[str, None]:
     session = await _get_or_create_session(user_id)
     context = await _retrieve_context(session.id, message)
 
-    lc_messages = [SystemMessage(content=SYSTEM_PROMPT)]
+    langchain_messages = [SystemMessage(content=SYSTEM_PROMPT)]
     for msg in context:
-        if msg.role == "user":
-            lc_messages.append(HumanMessage(content=msg.content))
-        elif msg.role == "assistant":
-            lc_messages.append(AIMessage(content=msg.content))
-    lc_messages.append(HumanMessage(content=message))
+        if msg.role == MessageRole.user:
+            langchain_messages.append(HumanMessage(content=msg.content))
+        elif msg.role == MessageRole.assistant:
+            langchain_messages.append(AIMessage(content=msg.content))
+    langchain_messages.append(HumanMessage(content=message))
 
     full_response = ""
     try:
-        async for chunk in _llm.astream(lc_messages):
+        async for chunk in _llm.astream(langchain_messages):
             content = chunk.content
             if content:
                 full_response += content
