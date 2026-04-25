@@ -11,6 +11,7 @@ from backend.app.agents.utils import sse
 from backend.app.agents.customer_service.prompts import SYSTEM_PROMPT
 from backend.app.db.session import AsyncSessionLocal
 from backend.app.models.chat_session import ChatSession, ChatMessage, MessageRole
+from backend.app.models.knowledge import KnowledgeChunk, KnowledgeDocument, UserKnowledgeSelection
 
 OLLAMA_BASE_URL = "http://host.docker.internal:11434"
 MODEL = "llama3.1:8b"
@@ -19,13 +20,13 @@ EMBED_MODEL = "nomic-embed-text"
 # 语义检索 top-K 条 + 最近兜底 N 条
 TOP_K_SEMANTIC = 6
 RECENT_FALLBACK = 4
+TOP_K_KNOWLEDGE = 4
 
 _llm = ChatOllama(model=MODEL, base_url=OLLAMA_BASE_URL)
 _embeddings = OllamaEmbeddings(model=EMBED_MODEL, base_url=OLLAMA_BASE_URL)
 
 
 async def _embed(text: str) -> list[float]:
-# 把 一句话 转换成 embedding 向量。
     return await _embeddings.aembed_query(text)
 
 
@@ -46,10 +47,8 @@ async def _get_or_create_session(user_id: int) -> ChatSession:
         return session
 
 
-async def _retrieve_context(session_db_id: int, query: str) -> list[ChatMessage]:
+async def _retrieve_context(session_db_id: int, query_embedding: list[float]) -> list[ChatMessage]:
     """向量检索语义相关消息 + 最近消息兜底，合并去重后按时间排序。"""
-    query_embedding = await _embed(query)
-
     async with AsyncSessionLocal() as db:
         # 语义相似度检索（余弦距离 <=>，越小越相似）
         semantic_result = await db.execute(
@@ -112,6 +111,24 @@ async def _save_messages(session_db_id: int, user_content: str, assistant_conten
         await db.commit()
 
 
+async def _retrieve_knowledge(user_id: int, query_embedding: list[float]) -> list[str]:
+    """从用户已选知识库中语义检索最相关的切片文本。"""
+    async with AsyncSessionLocal() as db:
+        selected_kb_ids = select(UserKnowledgeSelection.knowledge_base_id).where(
+            UserKnowledgeSelection.user_id == user_id
+        )
+        result = await db.execute(
+            select(KnowledgeChunk)
+            .join(KnowledgeDocument, KnowledgeChunk.document_id == KnowledgeDocument.id)
+            .where(KnowledgeDocument.knowledge_base_id.in_(selected_kb_ids))
+            .where(KnowledgeChunk.embedding.isnot(None))
+            .order_by(KnowledgeChunk.embedding.op("<=>")(query_embedding))
+            .limit(TOP_K_KNOWLEDGE)
+        )
+        chunks = result.scalars().all()
+    return [c.content for c in chunks]
+
+
 async def generate(user_id: int, message: str) -> AsyncGenerator[str, None]:
     """客服 Agent 主流程，返回 SSE 事件流。
 
@@ -121,9 +138,21 @@ async def generate(user_id: int, message: str) -> AsyncGenerator[str, None]:
       done        — 流结束
     """
     session = await _get_or_create_session(user_id)
-    context = await _retrieve_context(session.id, message)
+    query_embedding = await _embed(message)
 
-    langchain_messages = [SystemMessage(content=SYSTEM_PROMPT)]
+    # 并发：对话历史检索 + 知识库检索（复用同一个 embedding，不重复计算）
+    context, kb_chunks = await asyncio.gather(
+        _retrieve_context(session.id, query_embedding),
+        _retrieve_knowledge(user_id, query_embedding),
+    )
+
+    # 知识库内容注入 system prompt
+    system_content = SYSTEM_PROMPT
+    if kb_chunks:
+        kb_text = "\n---\n".join(kb_chunks)
+        system_content += f"\n\n以下是可能相关的知识库内容，请优先参考：\n{kb_text}"
+
+    langchain_messages = [SystemMessage(content=system_content)]
     for msg in context:
         if msg.role == MessageRole.user:
             langchain_messages.append(HumanMessage(content=msg.content))

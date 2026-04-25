@@ -26,6 +26,7 @@ langchain = "^0.3"
 langchain-ollama = "^0.2"
 langchain-core = "^0.3"
 pgvector = "^0.3"
+pypdf = "^4.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.4"
