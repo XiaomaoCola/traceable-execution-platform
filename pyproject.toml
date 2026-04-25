@@ -38,6 +38,11 @@ ruff = "^0.1.14"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pytest.ini_options]
+pythonpath = ["."]          # 让 pytest 能找到 backend.app.* 模块
+testpaths = ["tests"]       # 只在 tests/ 目录下找测试文件
+asyncio_mode = "auto"       # pytest-asyncio：async 测试函数自动识别
+
 [tool.black]
 line-length = 100
 target-version = ['py311']
