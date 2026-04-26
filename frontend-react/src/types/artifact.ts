@@ -10,7 +10,6 @@ export interface Artifact {
   size_bytes: number
   sha256_hash: string
   ticket_id: number
-  run_id: number | null
   uploaded_by_id: number
   is_deleted: boolean
   created_at: string

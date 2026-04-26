@@ -30,13 +30,6 @@ class AuditEventType(str, Enum):
     TICKET_APPROVED = "ticket.approved"
     TICKET_CLOSED = "ticket.closed"
 
-    # Run events (critical for traceability)
-    RUN_CREATED = "run.created"
-    RUN_STARTED = "run.started"
-    RUN_COMPLETED = "run.completed"
-    RUN_FAILED = "run.failed"
-    RUN_TIMEOUT = "run.timeout"
-
     # Artifact events (critical for evidence chain)
     ARTIFACT_UPLOADED = "artifact.uploaded"
     ARTIFACT_DOWNLOADED = "artifact.downloaded"

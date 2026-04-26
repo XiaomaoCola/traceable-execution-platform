@@ -7,7 +7,7 @@ import {
   Layout as AntLayout, Menu, Button, Avatar, Dropdown, Tag, theme,
 } from 'antd'
 import {
-  HomeOutlined, FileTextOutlined, DesktopOutlined, PlayCircleOutlined,
+  HomeOutlined, FileTextOutlined, DesktopOutlined,
   RobotOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, LogoutOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '../context/AuthContext'
@@ -36,14 +36,6 @@ const ticketMenuItems = [
       { key: '/assets/new', label: '创建资产' },
     ],
   },
-  {
-    key: 'runs-group',
-    icon: <PlayCircleOutlined />,
-    label: '运行记录',
-    children: [
-      { key: '/runs', label: '运行列表' },
-    ],
-  },
   { key: '/ai/ticket', icon: <RobotOutlined />, label: 'AI 工单助手' },
 ]
 
@@ -55,7 +47,6 @@ function getMenuItems(_pathname: string) {
 function getOpenKeys(pathname: string): string[] {
   if (pathname.startsWith('/tickets')) return ['tickets-group']
   if (pathname.startsWith('/assets')) return ['assets-group']
-  if (pathname.startsWith('/runs')) return ['runs-group']
   return []
 }
 

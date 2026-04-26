@@ -2,7 +2,6 @@
 
 export * from './user'
 export * from './ticket'
-export * from './run'
 export * from './artifact'
 export * from './asset'
 export * from './agent'

@@ -11,8 +11,8 @@ class User(Base, IDMixin, TimestampMixin):
     User model for authentication and authorization.
 
     Roles:
-    - is_admin=False: employee (can submit tickets, upload artifacts, trigger proof runs)
-    - is_admin=True: admin (can manage assets, scripts, approve action runs, view all audit logs)
+    - is_admin=False: employee (can submit tickets, upload artifacts)
+    - is_admin=True: admin (can manage assets, approve tickets, view all audit logs)
     """
 
     __tablename__ = "users"
@@ -29,7 +29,6 @@ class User(Base, IDMixin, TimestampMixin):
     tickets = relationship("Ticket", back_populates="creator", foreign_keys="Ticket.created_by_id")
     # 这行代码不会在数据库里新增任何一列，它只是 ORM 的“使用便利层”。
     # back_populates="creator" ：这里是双向同步的关键。说明Ticket 里有一个属性叫 creator，它和这里的 tickets 是一对。
-    runs = relationship("Run", back_populates="executor", foreign_keys="Run.executed_by_id")
     daily_token_usage = relationship(
         "UserDailyTokenUsage",
         back_populates="user",

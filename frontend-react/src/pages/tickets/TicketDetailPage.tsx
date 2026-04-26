@@ -9,9 +9,9 @@ import {
 } from 'antd'
 import { UploadOutlined, RobotOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { ticketsApi, artifactsApi, runsApi, workflowsApi } from '../../api'
+import { ticketsApi, artifactsApi, workflowsApi } from '../../api'
 import { useAuth } from '../../context/AuthContext'
-import type { Ticket, Artifact, Run, TicketStatus, TicketCreate } from '../../types'
+import type { Ticket, Artifact, TicketStatus, TicketCreate } from '../../types'
 
 const { Title } = Typography
 
@@ -35,7 +35,6 @@ export default function TicketDetailPage() {
 
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
-  const [runs, setRuns] = useState<Run[]>([])
   const [loading, setLoading] = useState(!isNew)
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -52,12 +51,8 @@ export default function TicketDetailPage() {
     ticketsApi.get(ticketId)
       .then(t => {
         setTicket(t)
-        // 附件和运行记录单独请求，失败只记录错误不影响主体
         artifactsApi.listByTicket(ticketId)
           .then(a => setArtifacts(a))
-          .catch(() => {})
-        runsApi.list(ticketId)
-          .then(r => setRuns(r))
           .catch(() => {})
       })
       .catch(err => setError(err.message))
@@ -115,16 +110,6 @@ export default function TicketDetailPage() {
     }
   }
 
-  async function handleCreateRun(runType: 'proof' | 'action') {
-    if (!ticket) return
-    try {
-      const run = await runsApi.create(ticket.id, runType)
-      setRuns(prev => [run, ...prev])
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '创建失败')
-    }
-  }
-
   // ── 创建模式 ──────────────────────────────────────────────────────────────
 
   if (isNew) {
@@ -171,25 +156,6 @@ export default function TicketDetailPage() {
       title: '操作',
       render: (_, a) => (
         <Button type="link" href={artifactsApi.downloadUrl(a.id)} target="_blank">下载</Button>
-      ),
-    },
-  ]
-
-  const runColumns: ColumnsType<Run> = [
-    { title: 'ID', dataIndex: 'id', width: 80, render: v => `#${v}` },
-    {
-      title: '类型', dataIndex: 'run_type', width: 100,
-      render: (v: string) => <Tag color={v === 'proof' ? 'purple' : 'volcano'}>{v === 'proof' ? 'Proof' : 'Action'}</Tag>,
-    },
-    {
-      title: '状态', dataIndex: 'status', width: 100,
-      render: (v: string) => <Tag color={v === 'done' ? 'green' : v === 'failed' ? 'red' : 'orange'}>{v}</Tag>,
-    },
-    { title: '创建时间', dataIndex: 'created_at', render: (v: string) => new Date(v).toLocaleString('zh-CN') },
-    {
-      title: '操作',
-      render: (_, run) => (
-        <Button type="link" onClick={() => navigate(`/runs/${run.id}`)}>查看日志</Button>
       ),
     },
   ]
@@ -264,20 +230,6 @@ export default function TicketDetailPage() {
         <Table rowKey="id" dataSource={artifacts} columns={artifactColumns} pagination={false} size="small" />
       </Card>
 
-      {/* 执行记录 */}
-      <Card
-        title="执行记录"
-        extra={
-          <Space>
-            <Button size="small" onClick={() => handleCreateRun('proof')}>+ Proof Run</Button>
-            {ticket.status === 'approved' && (
-              <Button type="primary" size="small" onClick={() => handleCreateRun('action')}>+ Action Run</Button>
-            )}
-          </Space>
-        }
-      >
-        <Table rowKey="id" dataSource={runs} columns={runColumns} pagination={false} size="small" />
-      </Card>
     </div>
   )
 }

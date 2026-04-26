@@ -11,7 +11,7 @@ class TicketStatus(str, enum.Enum):
     """Ticket status state machine."""
     DRAFT = "draft"
     SUBMITTED = "submitted"
-    APPROVED = "approved"  # Required for action runs
+    APPROVED = "approved"
     RUNNING = "running"
     DONE = "done"
     FAILED = "failed"
@@ -24,11 +24,9 @@ class Ticket(Base, IDMixin, TimestampMixin):
 
     Lifecycle:
     1. Employee creates ticket (DRAFT/SUBMITTED)
-    2. For ProofRun: no approval needed, can run immediately
-    3. For ActionRun: requires approval (APPROVED)
-    4. Run executes (RUNNING)
-    5. Completes (DONE/FAILED)
-    6. Ticket closed (CLOSED)
+    2. Admin approves (APPROVED)
+    3. Execution (RUNNING → DONE/FAILED)
+    4. Ticket closed (CLOSED)
     """
 
     __tablename__ = "tickets"
@@ -60,7 +58,6 @@ class Ticket(Base, IDMixin, TimestampMixin):
     # 等所有表都加载完了之后，再去找一张叫 users 的表，再去找它的 id 列，
     # 这个叫做延迟绑定（lazy resolution）。
 
-    # Approver (for action runs)
     approved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     # Relationships
@@ -68,7 +65,6 @@ class Ticket(Base, IDMixin, TimestampMixin):
     creator = relationship("User", foreign_keys=[created_by_id], back_populates="tickets")
     # 上面的ForeignKey是：数据库层，保证数据正确。这里的relationship是：Python 层。
     approver = relationship("User", foreign_keys=[approved_by_id])
-    runs = relationship("Run", back_populates="ticket", cascade="all, delete-orphan")
     artifacts = relationship("Artifact", back_populates="ticket", cascade="all, delete-orphan")
 
     def __repr__(self):
