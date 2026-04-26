@@ -13,7 +13,7 @@ from backend.app.models.run import Run, RunStatus, RunType
 from backend.app.models.artifact import Artifact
 from backend.app.services.registry import script_registry
 from backend.app.services.run_service import update_run_status
-from backend.app.core.config import settings
+from backend.app.core.config import get_settings
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class RunExecutor:
             await update_run_status(
                 db, run.id, RunStatus.TIMEOUT,
                 result_summary="Run execution timed out",
-                stderr_log=f"Execution exceeded timeout of {settings.run_timeout_seconds} seconds"
+                stderr_log=f"Execution exceeded timeout of {get_settings().run_timeout_seconds} seconds"
             )
 
         except Exception as e:

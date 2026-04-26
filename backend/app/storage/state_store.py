@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 import json
 
-from backend.app.core.config import settings
+from backend.app.core.config import get_settings
 
 
 class StateStore(ABC):
@@ -126,6 +126,7 @@ def get_state_store() -> StateStore:
     """
     # For now, always use in-memory store
     # TODO: Add config option to use Redis in production
+    settings = get_settings()
     if settings.environment == "production" and settings.redis_url:
         try:
             return RedisStateStore(settings.redis_url)

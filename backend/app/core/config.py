@@ -1,5 +1,7 @@
 """Application configuration using Pydantic Settings."""
 
+from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 # BaseSettings：把「环境变量 / .env 文件」自动变成 Python 对象。
 # SettingsConfigDict：告诉 BaseSettings「去哪里读、怎么读」。
@@ -62,5 +64,14 @@ class Settings(BaseSettings):
     litellm_master_key: str = ""
 
 
-# Global settings instance
-settings = Settings()
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """返回全局 Settings 单例。
+
+    用 @lru_cache 替代模块级 settings = Settings()，让实例化推迟到
+    第一次调用时，而不是 import 时。好处：
+      - 测试可通过 get_settings.cache_clear() + monkeypatch 替换返回值
+      - CI 环境没有 .env 时，只要测试不触发路径就不会崩溃
+      - FastAPI 路由可用 Depends(get_settings) 接收，测试用 dependency_overrides 覆盖
+    """
+    return Settings()

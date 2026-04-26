@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import datetime
 
 from backend.app.audit.events import AuditEvent
-from backend.app.core.config import settings
+from backend.app.core.config import get_settings
 
 
 class AuditLogger:
@@ -159,5 +159,27 @@ class AuditLogger:
         return events
 
 
-# Global audit logger instance
-audit_logger = AuditLogger(settings.audit_log_path)
+class _LazyAuditLogger:
+    """Lazy proxy：第一次调用 .log() 等方法时才实例化 AuditLogger。
+
+    为什么不直接写 audit_logger = AuditLogger(get_settings().audit_log_path)？
+    因为那仍然是模块级调用，import 时就触发 get_settings() → Settings()，
+    CI 环境没有 .env 时会崩溃。
+
+    用 proxy 的好处：import 本模块完全无副作用，只有真正调用方法时才读配置。
+    patch("...audit_logger.log") 依然有效——patch 直接在 proxy 实例上设置属性，
+    Python 属性查找先找实例属性，所以 mock 会遮住 __getattr__。
+    """
+
+    _instance: AuditLogger | None = None
+
+    def _get(self) -> AuditLogger:
+        if self._instance is None:
+            self._instance = AuditLogger(get_settings().audit_log_path)
+        return self._instance
+
+    def __getattr__(self, name: str):
+        return getattr(self._get(), name)
+
+
+audit_logger = _LazyAuditLogger()

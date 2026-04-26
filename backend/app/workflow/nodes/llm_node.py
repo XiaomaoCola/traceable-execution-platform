@@ -3,7 +3,7 @@ from __future__ import annotations
 import httpx
 from pydantic import BaseModel
 
-from ...core.config import settings
+from ...core.config import get_settings
 from ..types import NodeType
 from .base import BaseNode, NodeRunResult, RunStatus
 
@@ -59,8 +59,8 @@ class LLMNode(BaseNode[LLMNodeData]):
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
                 resp = await client.post(
-                    f"{settings.litellm_base_url}/chat/completions",
-                    headers={"Authorization": f"Bearer {settings.litellm_master_key}"},
+                    f"{get_settings().litellm_base_url}/chat/completions",
+                    headers={"Authorization": f"Bearer {get_settings().litellm_master_key}"},
                     json={
                         "model": self.node_data.model,
                         "messages": messages,

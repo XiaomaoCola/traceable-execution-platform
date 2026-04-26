@@ -14,7 +14,7 @@ import aiofiles
 import boto3
 from botocore.exceptions import ClientError
 
-from backend.app.core.config import settings
+from backend.app.core.config import get_settings
 
 
 class ArtifactStore(ABC):
@@ -257,6 +257,7 @@ def get_artifact_store() -> ArtifactStore:
     Returns:
         Configured artifact store instance
     """
+    settings = get_settings()
     storage_type = settings.artifact_storage_type
 
     if storage_type == "local":
