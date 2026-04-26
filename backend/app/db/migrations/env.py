@@ -8,7 +8,7 @@ from sqlalchemy import pool
 from alembic import context
 
 # Import settings and Base
-from backend.app.core.config import settings
+from backend.app.core.config import get_settings
 from backend.app.db.base import Base
 
 # Import all models to ensure they're registered with Base
@@ -19,7 +19,7 @@ import backend.app.models  # noqa
 config = context.config
 
 # Use synchronous DB URL for Alembic migrations
-config.set_main_option("sqlalchemy.url", settings.sync_database_url)
+config.set_main_option("sqlalchemy.url", get_settings().sync_database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

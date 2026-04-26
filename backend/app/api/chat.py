@@ -1,7 +1,7 @@
 import httpx
 from fastapi import APIRouter, HTTPException, Response
 
-from backend.app.core.config import settings
+from backend.app.core.config import get_settings
 from backend.app.core.dependencies import CurrentUser, RedisClient
 from backend.app.schemas.chat import ChatCompletionsRequest
 
@@ -30,8 +30,8 @@ async def chat_completions(payload: ChatCompletionsRequest, current_user: Curren
     # ── 转发给 LiteLLM（注意 /v1） ───────────────────
     async with httpx.AsyncClient(timeout=120.0) as client:
         resp = await client.post(
-            f"{settings.litellm_base_url}/v1/chat/completions",
-            headers={"Authorization": f"Bearer {settings.litellm_master_key}"},
+            f"{get_settings().litellm_base_url}/v1/chat/completions",
+            headers={"Authorization": f"Bearer {get_settings().litellm_master_key}"},
             json=payload.model_dump(),
         )
 

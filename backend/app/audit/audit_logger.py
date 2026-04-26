@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import datetime
 
 from backend.app.audit.events import AuditEvent
-from backend.app.core.config import settings
+from backend.app.core.config import get_settings
 
 
 class AuditLogger:
@@ -159,5 +159,31 @@ class AuditLogger:
         return events
 
 
-# Global audit logger instance
-audit_logger = AuditLogger(settings.audit_log_path)
+class _LazyAuditLogger:
+    """Lazy proxy：第一次真正写日志时才实例化 AuditLogger。
+
+    为什么不直接写 audit_logger = AuditLogger(get_settings().audit_log_path)？
+    因为那仍然是模块级调用，import 时就触发 get_settings() → Settings()，
+    CI 环境没有 .env 时会崩溃。
+
+    log() 在类上显式定义而不走 __getattr__，原因：
+      unittest.mock.patch 在替换属性前会先 getattr 取旧值。
+      如果走 __getattr__，getattr 就触发 _get() → get_settings() → 崩溃。
+      显式定义后 patch 直接在类/实例上找到 log，不触发 _get()，mock 正常工作。
+    """
+
+    _instance: AuditLogger | None = None
+
+    def _get(self) -> AuditLogger:
+        if self._instance is None:
+            self._instance = AuditLogger(get_settings().audit_log_path)
+        return self._instance
+
+    async def log(self, event: AuditEvent) -> None:
+        return await self._get().log(event)
+
+    def __getattr__(self, name: str):
+        return getattr(self._get(), name)
+
+
+audit_logger = _LazyAuditLogger()

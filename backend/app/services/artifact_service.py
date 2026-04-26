@@ -11,7 +11,7 @@ from backend.app.models.user import User
 from backend.app.storage.artifact_store import artifact_store
 from backend.app.audit.events import AuditEvent, AuditEventType
 from backend.app.audit.audit_logger import audit_logger
-from backend.app.core.config import settings
+from backend.app.core.config import get_settings
 
 
 async def upload_artifact(
@@ -64,11 +64,11 @@ async def upload_artifact(
     file.seek(0)
     # Reset to beginning
 
-    max_size_bytes = settings.max_artifact_size_mb * 1024 * 1024
+    max_size_bytes = get_settings().max_artifact_size_mb * 1024 * 1024
     if file_size > max_size_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File size exceeds maximum allowed size of {settings.max_artifact_size_mb}MB"
+            detail=f"File size exceeds maximum allowed size of {get_settings().max_artifact_size_mb}MB"
         )
 
     # Generate storage path: tickets/<ticket_id>/<filename>

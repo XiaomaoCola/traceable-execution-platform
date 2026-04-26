@@ -6,7 +6,7 @@ from typing import Any
 from jose import jwt
 from passlib.context import CryptContext
 
-from backend.app.core.config import settings
+from backend.app.core.config import get_settings
 
 
 # Password hashing context
@@ -41,6 +41,7 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
     """
     to_encode = data.copy()
 
+    settings = get_settings()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
@@ -67,6 +68,7 @@ def decode_access_token(token: str) -> dict[str, Any]:
     Raises:
         JWTError: If token is invalid or expired
     """
+    settings = get_settings()
     payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
     # 这里会 校验签名，校验算法，校验 token 格式，校验 exp 是否小于当前时间。
     # 如果 当前时间 > exp，会抛异常 ExpiredSignatureError 。

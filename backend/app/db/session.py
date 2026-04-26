@@ -1,7 +1,7 @@
 """Database session management(async)."""
 
 
-from backend.app.core.config import settings
+from backend.app.core.config import get_settings
 
 
 # # Create database engine
@@ -35,9 +35,9 @@ from sqlalchemy.ext.asyncio import (
 
 # Create async database engine
 engine = create_async_engine(
-    settings.database_url,          # 必须是 async URL
+    get_settings().database_url,          # 必须是 async URL
     pool_pre_ping=True,
-    echo=settings.environment == "development",
+    echo=get_settings().environment == "development",
 )
 
 # Create async session factory

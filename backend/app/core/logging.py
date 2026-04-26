@@ -4,7 +4,7 @@ import logging
 import sys
 from pathlib import Path
 
-from backend.app.core.config import settings
+from backend.app.core.config import get_settings
 
 
 def setup_logging():
@@ -49,7 +49,7 @@ def setup_logging():
     root_logger = logging.getLogger()
     # 跟getLogger(__name__)不一样，不传名字的话拿到的就是 root logger（根 logger）。
     root_logger.setLevel(
-        logging.DEBUG if settings.environment == "development" else logging.INFO
+        logging.DEBUG if get_settings().environment == "development" else logging.INFO
     )
     root_logger.addHandler(console_handler)
     root_logger.addHandler(file_handler)
