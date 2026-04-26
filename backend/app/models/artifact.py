@@ -13,7 +13,7 @@ class Artifact(Base, IDMixin, TimestampMixin):
     Key features:
     - Immutable: Once uploaded, cannot be modified
     - Hash-verified: SHA-256 hash stored for integrity verification
-    - Traceable: Linked to specific run and uploader
+    - Traceable: Linked to ticket and uploader
     """
 
     __tablename__ = "artifacts"
@@ -36,9 +36,6 @@ class Artifact(Base, IDMixin, TimestampMixin):
     # Related ticket (primary association)
     ticket_id = Column(Integer, ForeignKey("tickets.id"), nullable=False)
 
-    # Related run (optional - set when artifact is produced by an automated run)
-    run_id = Column(Integer, ForeignKey("runs.id"), nullable=True)
-
     # Uploader
     uploaded_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
@@ -47,11 +44,10 @@ class Artifact(Base, IDMixin, TimestampMixin):
 
     # Relationships
     ticket = relationship("Ticket", back_populates="artifacts")
-    run = relationship("Run", back_populates="artifacts")
     uploader = relationship("User", foreign_keys=[uploaded_by_id])
 
     def __repr__(self):
         return (
             f"<Artifact(id={self.id}, filename='{self.filename}', "
-            f"hash='{self.sha256_hash[:8]}...', run_id={self.run_id})>"
+            f"hash='{self.sha256_hash[:8]}...')>"
         )

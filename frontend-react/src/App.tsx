@@ -16,9 +16,6 @@ import TicketsPage from './pages/tickets/TicketsPage'
 import TicketDetailPage from './pages/tickets/TicketDetailPage'
 import AssetsPage from './pages/assets/AssetsPage'
 import AssetDetailPage from './pages/assets/AssetDetailPage'
-import RunsPage from './pages/runs/RunsPage'
-import RunDetailPage from './pages/runs/RunDetailPage'
-
 import AiHomePage from './pages/ai/AiHomePage/AiHomePage'
 import AiFortunePage from './pages/ai/AiFortunePage/AiFortunePage'
 import AiStockPage from './pages/ai/AiStockPage/AiStockPage'
@@ -72,8 +69,6 @@ const router = createBrowserRouter([
       { path: '/tickets/:id', element: <TicketDetailPage /> },
       { path: '/assets', element: <AssetsPage /> },
       { path: '/assets/:id', element: <AssetDetailPage /> },
-      { path: '/runs', element: <RunsPage /> },
-      { path: '/runs/:id', element: <RunDetailPage /> },
       { path: '/ai/ticket', element: <AiTicketPage /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],

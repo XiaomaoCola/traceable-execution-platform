@@ -3,7 +3,6 @@
 export { authApi } from './auth'
 export { ticketsApi } from './tickets'
 export { artifactsApi } from './artifacts'
-export { runsApi } from './runs'
 export { assetsApi } from './assets'
 export { workflowsApi } from './workflows'
 export type { RouterConfigAnalysisResult } from './workflows'
