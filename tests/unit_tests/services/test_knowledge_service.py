@@ -6,7 +6,7 @@
 
 运行方式：
   pytest tests/                      # 跑所有测试
-  pytest tests/test_knowledge_service.py -v   # 跑这个文件，-v 显示每条测试的名字
+  pytest tests/unit_tests/services/test_knowledge_service.py -v   # 跑这个文件，-v 显示每条测试的名字
 
 【为什么要测 _chunk_text 和 _extract_text？】
 这两个函数是知识库功能的核心入口：
