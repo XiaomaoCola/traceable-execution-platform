@@ -118,7 +118,7 @@ class TestCreateUser:
         mock_db.execute.return_value = no_conflict
 
         with patch("backend.app.services.auth_service.get_password_hash", return_value="hashed"):
-            result = await auth_service.create_user(mock_db, self._user_create())
+            await auth_service.create_user(mock_db, self._user_create())
 
         mock_db.add.assert_called_once()
         mock_db.commit.assert_awaited_once()

@@ -6,8 +6,6 @@
   - Variable.text property 在各类型下的字符串化行为
 """
 
-import pytest
-
 from backend.app.workflow.variable import (
     ArrayVariable,
     BooleanVariable,

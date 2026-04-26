@@ -7,8 +7,6 @@ compute_sha256 / verify_sha256 是文件完整性校验的基础工具，
 import hashlib
 import io
 
-import pytest
-
 from backend.app.utils.hashing import compute_sha256, verify_sha256
 
 
