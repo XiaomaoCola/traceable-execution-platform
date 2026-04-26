@@ -57,7 +57,7 @@ async def trigger_router_config_analysis(
         select(Artifact).where(
             Artifact.id == body.artifact_id,
             Artifact.ticket_id == ticket_id,
-            Artifact.is_deleted == False,
+            Artifact.is_deleted.is_(False),
         )
     )
     if art_result.scalar_one_or_none() is None:

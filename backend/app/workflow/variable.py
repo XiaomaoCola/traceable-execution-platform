@@ -78,7 +78,7 @@ def build_variable(selector: Selector, value: Any) -> Variable:
     并且通过 discriminated union 支持 Pydantic 的自动反序列化。
     我们内联在这里，逻辑等价，不需要额外的工厂模块。
     """
-    node_id, var_name = selector[0], selector[1]
+    var_name = selector[1]
     base = {"name": var_name, "selector": list(selector)}
 
     if value is None:

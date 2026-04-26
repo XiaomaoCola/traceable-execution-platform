@@ -3,7 +3,6 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from ..types import NodeType
-from ..variable_pool import VariablePool
 from .base import BaseNode, NodeRunResult, RunStatus
 
 

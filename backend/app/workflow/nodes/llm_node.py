@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import httpx
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from ...core.config import settings
 from ..types import NodeType

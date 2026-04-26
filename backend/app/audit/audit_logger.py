@@ -5,7 +5,6 @@ All audit events are written to an immutable log file that can be used
 for compliance, forensics, and dispute resolution.
 """
 
-import json
 import logging
 from pathlib import Path
 from datetime import datetime

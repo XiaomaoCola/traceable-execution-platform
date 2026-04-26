@@ -140,7 +140,7 @@ async def list_ticket_artifacts(
     result = await db.execute(
         select(Artifact).where(
             Artifact.ticket_id == ticket_id,
-            Artifact.is_deleted == False
+            Artifact.is_deleted.is_(False)
         )
     )
     artifacts = result.scalars().all()

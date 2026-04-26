@@ -1,7 +1,5 @@
 """Database session management(async)."""
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
 
 from backend.app.core.config import settings
 
@@ -34,9 +32,6 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-
-from backend.app.core.config import settings
-
 
 # Create async database engine
 engine = create_async_engine(

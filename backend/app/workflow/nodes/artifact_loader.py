@@ -51,7 +51,7 @@ class ArtifactLoaderNode(BaseNode[ArtifactLoaderNodeData]):
 
         # 查询 artifact 元数据，拿 storage_path
         result = await db.execute(
-            select(Artifact).where(Artifact.id == artifact_id, Artifact.is_deleted == False)
+            select(Artifact).where(Artifact.id == artifact_id, Artifact.is_deleted.is_(False))
         )
         artifact = result.scalar_one_or_none()
         if artifact is None:

@@ -1,13 +1,12 @@
 """Authentication service."""
 
-from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from backend.app.models.user import User
 from backend.app.schemas.user import UserCreate
-from backend.app.core.security import verify_password, get_password_hash, create_access_token
+from backend.app.core.security import verify_password, get_password_hash
 from backend.app.audit.events import AuditEvent, AuditEventType
 from backend.app.audit.audit_logger import audit_logger
 
@@ -42,7 +41,7 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> U
         await audit_logger.log(AuditEvent(
             event_type=AuditEventType.USER_LOGIN_FAILED,
             actor_username=username,
-            action=f"Login failed: user not found",
+            action="Login failed: user not found",
             success=False,
             error_message="User not found"
         ))
@@ -54,7 +53,7 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> U
             event_type=AuditEventType.USER_LOGIN_FAILED,
             actor_id=user.id,
             actor_username=user.username,
-            action=f"Login failed: incorrect password",
+            action="Login failed: incorrect password",
             success=False,
             error_message="Incorrect password"
         ))
@@ -66,7 +65,7 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> U
             event_type=AuditEventType.USER_LOGIN_FAILED,
             actor_id=user.id,
             actor_username=user.username,
-            action=f"Login failed: user inactive",
+            action="Login failed: user inactive",
             success=False,
             error_message="User inactive"
         ))
@@ -77,7 +76,7 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> U
         event_type=AuditEventType.USER_LOGIN,
         actor_id=user.id,
         actor_username=user.username,
-        action=f"User logged in successfully"
+        action="User logged in successfully"
     ))
 
     return user

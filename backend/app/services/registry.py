@@ -5,8 +5,6 @@ This module manages the whitelist of scripts and validators that can be executed
 """
 
 from typing import Protocol, Any
-from pathlib import Path
-import json
 
 
 class Validator(Protocol):

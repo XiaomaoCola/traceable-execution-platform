@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
-from backend.app.schemas.ticket import TicketCreate, TicketUpdate, TicketResponse, TicketApprove
+from backend.app.schemas.ticket import TicketCreate, TicketUpdate, TicketResponse
 from backend.app.core.dependencies import DatabaseSession, CurrentUser, CurrentAdmin
 from backend.app.services.ticket_service import create_ticket, approve_ticket, update_ticket
 from backend.app.models.ticket import Ticket

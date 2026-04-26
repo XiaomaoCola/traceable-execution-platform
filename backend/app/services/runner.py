@@ -7,7 +7,6 @@ This module handles the actual execution of proof runs and action runs.
 import asyncio
 import logging
 from datetime import datetime, timezone
-from typing import Any
 from sqlalchemy.orm import Session
 
 from backend.app.models.run import Run, RunStatus, RunType
@@ -74,7 +73,7 @@ class RunExecutor:
         # Get associated artifacts
         artifacts = db.query(Artifact).filter(
             Artifact.run_id == run.id,
-            Artifact.is_deleted == False
+            Artifact.is_deleted.is_(False)
         ).all()
 
         if not artifacts:

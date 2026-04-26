@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import io
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from ...models.artifact import Artifact
 from ..types import NodeType
