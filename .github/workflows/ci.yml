@@ -49,7 +49,7 @@ jobs:
 
       # 第五步：安装项目依赖
       - name: 安装依赖
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --no-root
 
       # 第六步：代码风格检查（ruff）
       # ruff 会检查代码是否规范，比如有没有没用的 import、变量名是否合法等
