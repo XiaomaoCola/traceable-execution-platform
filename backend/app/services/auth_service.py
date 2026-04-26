@@ -8,7 +8,7 @@ from backend.app.models.user import User
 from backend.app.schemas.user import UserCreate
 from backend.app.core.security import verify_password, get_password_hash
 from backend.app.audit.events import AuditEvent, AuditEventType
-from backend.app.audit.audit_logger import audit_logger
+from backend.app.audit.audit_logger import get_audit_logger
 
 
 # 原来写的是async def authenticate_user(db: Session, username: str, password: str) -> User | None:
@@ -38,7 +38,7 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> U
 
     if not user:
         # Log failed login attempt
-        await audit_logger.log(AuditEvent(
+        await get_audit_logger().log(AuditEvent(
             event_type=AuditEventType.USER_LOGIN_FAILED,
             actor_username=username,
             action="Login failed: user not found",
@@ -49,7 +49,7 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> U
 
     if not verify_password(password, user.hashed_password):
         # Log failed login attempt
-        await audit_logger.log(AuditEvent(
+        await get_audit_logger().log(AuditEvent(
             event_type=AuditEventType.USER_LOGIN_FAILED,
             actor_id=user.id,
             actor_username=user.username,
@@ -61,7 +61,7 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> U
 
     if not user.is_active:
         # Log failed login attempt
-        await audit_logger.log(AuditEvent(
+        await get_audit_logger().log(AuditEvent(
             event_type=AuditEventType.USER_LOGIN_FAILED,
             actor_id=user.id,
             actor_username=user.username,
@@ -72,7 +72,7 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> U
         return None
 
     # Log successful login
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=AuditEventType.USER_LOGIN,
         actor_id=user.id,
         actor_username=user.username,
@@ -134,7 +134,7 @@ async def create_user(db: AsyncSession, user_in: UserCreate, creator: User | Non
     await db.refresh(user)
 
     # Log user creation
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=AuditEventType.USER_CREATED,
         actor_id=creator.id if creator else None,
         actor_username=creator.username if creator else "system",

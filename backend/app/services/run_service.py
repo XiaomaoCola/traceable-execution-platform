@@ -8,7 +8,7 @@ from backend.app.models.ticket import Ticket, TicketStatus
 from backend.app.models.user import User
 from backend.app.schemas.run import RunCreate
 from backend.app.audit.events import AuditEvent, AuditEventType
-from backend.app.audit.audit_logger import audit_logger
+from backend.app.audit.audit_logger import get_audit_logger
 
 
 async def create_run(
@@ -90,7 +90,7 @@ async def create_run(
     db.refresh(run)
 
     # Log run creation
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=AuditEventType.RUN_CREATED,
         actor_id=executor.id,
         actor_username=executor.username,
@@ -169,7 +169,7 @@ async def update_run_status(
     db.refresh(run)
 
     # Log status update
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=event_type,
         actor_id=run.executed_by_id,
         actor_username=run.executor.username,

@@ -8,7 +8,7 @@ from backend.app.models.asset import Asset
 from backend.app.models.user import User
 from backend.app.schemas.asset import AssetCreate, AssetUpdate
 from backend.app.audit.events import AuditEvent, AuditEventType
-from backend.app.audit.audit_logger import audit_logger
+from backend.app.audit.audit_logger import get_audit_logger
 
 
 async def create_asset(
@@ -52,7 +52,7 @@ async def create_asset(
     await db.refresh(asset)
 
     # Log asset creation
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=AuditEventType.ASSET_CREATED,
         actor_id=creator.id,
         actor_username=creator.username,
@@ -113,7 +113,7 @@ async def update_asset(
     await db.refresh(asset)
 
     # Log update
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=AuditEventType.ASSET_UPDATED,
         actor_id=user.id,
         actor_username=user.username,
