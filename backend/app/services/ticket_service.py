@@ -8,7 +8,7 @@ from backend.app.models.ticket import Ticket, TicketStatus
 from backend.app.models.user import User
 from backend.app.schemas.ticket import TicketCreate, TicketUpdate
 from backend.app.audit.events import AuditEvent, AuditEventType
-from backend.app.audit.audit_logger import audit_logger
+from backend.app.audit.audit_logger import get_audit_logger
 
 
 async def create_ticket(
@@ -41,7 +41,7 @@ async def create_ticket(
     await db.refresh(ticket)
 
     # Log ticket creation
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=AuditEventType.TICKET_CREATED,
         actor_id=creator.id,
         actor_username=creator.username,
@@ -103,7 +103,7 @@ async def approve_ticket(
     await db.refresh(ticket)
 
     # Log approval
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=AuditEventType.TICKET_APPROVED,
         actor_id=approver.id,
         actor_username=approver.username,
@@ -163,7 +163,7 @@ async def update_ticket(
     await db.refresh(ticket)
 
     # Log update
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=AuditEventType.TICKET_UPDATED,
         actor_id=user.id,
         actor_username=user.username,

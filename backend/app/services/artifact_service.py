@@ -10,7 +10,7 @@ from backend.app.models.ticket import Ticket
 from backend.app.models.user import User
 from backend.app.storage.artifact_store import artifact_store
 from backend.app.audit.events import AuditEvent, AuditEventType
-from backend.app.audit.audit_logger import audit_logger
+from backend.app.audit.audit_logger import get_audit_logger
 from backend.app.core.config import get_settings
 
 
@@ -95,7 +95,7 @@ async def upload_artifact(
     await db.refresh(artifact)
 
     # Log artifact upload
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=AuditEventType.ARTIFACT_UPLOADED,
         actor_id=uploader.id,
         actor_username=uploader.username,
@@ -152,7 +152,7 @@ async def download_artifact(
     file_content = await artifact_store.read(artifact.storage_path)
 
     # Log artifact download
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=AuditEventType.ARTIFACT_DOWNLOADED,
         actor_id=user.id,
         actor_username=user.username,
@@ -204,7 +204,7 @@ async def verify_artifact(
     verified = computed_hash == artifact.sha256_hash
 
     # Log verification
-    await audit_logger.log(AuditEvent(
+    await get_audit_logger().log(AuditEvent(
         event_type=AuditEventType.ARTIFACT_VERIFIED,
         resource_type="artifact",
         resource_id=artifact.id,

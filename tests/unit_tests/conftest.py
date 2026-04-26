@@ -8,7 +8,7 @@
 纯函数测试（variable_pool、hashing 等）不受影响。
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -55,7 +55,10 @@ def mock_audit():
             await auth_service.authenticate_user(mock_db, "user", "wrong_pass")
             mock_audit.assert_awaited_once()
     """
-    with patch(
-        "backend.app.audit.audit_logger.audit_logger.log", new_callable=AsyncMock
-    ) as mock:
-        yield mock
+    import backend.app.audit.audit_logger as _module
+    mock_log = AsyncMock()
+    mock_logger = MagicMock()
+    mock_logger.log = mock_log
+    _module._audit_logger = mock_logger
+    yield mock_log
+    _module._audit_logger = None
