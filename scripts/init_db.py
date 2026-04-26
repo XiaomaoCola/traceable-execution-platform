@@ -2,20 +2,21 @@
 Initialize database with sample data.
 
 Creates an admin user and some sample assets.
+Run after: alembic upgrade head
 """
 
 import asyncio
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
-from backend.app.db.session import SessionLocal, engine
-from backend.app.db.base import Base
+from backend.app.db.session import AsyncSessionLocal
 from backend.app.models import User, Asset
 from backend.app.core.security import get_password_hash
 
 
-def create_admin_user(db: Session) -> User:
-    """Create default admin user."""
-    admin = db.query(User).filter(User.username == "admin").first()
+async def create_admin_user(db: AsyncSession) -> User:
+    result = await db.execute(select(User).where(User.username == "admin"))
+    admin = result.scalar_one_or_none()
 
     if admin:
         print("Admin user already exists")
@@ -27,20 +28,20 @@ def create_admin_user(db: Session) -> User:
         hashed_password=get_password_hash("admin123"),
         full_name="System Administrator",
         is_admin=True,
-        is_active=True
+        is_active=True,
     )
 
     db.add(admin)
-    db.commit()
-    db.refresh(admin)
+    await db.commit()
+    await db.refresh(admin)
 
     print(f"✅ Created admin user: {admin.username}")
     return admin
 
 
-def create_sample_employee(db: Session) -> User:
-    """Create a sample employee user."""
-    employee = db.query(User).filter(User.username == "employee").first()
+async def create_sample_employee(db: AsyncSession) -> User:
+    result = await db.execute(select(User).where(User.username == "employee"))
+    employee = result.scalar_one_or_none()
 
     if employee:
         print("Employee user already exists")
@@ -52,90 +53,75 @@ def create_sample_employee(db: Session) -> User:
         hashed_password=get_password_hash("employee123"),
         full_name="Test Employee",
         is_admin=False,
-        is_active=True
+        is_active=True,
     )
 
     db.add(employee)
-    db.commit()
-    db.refresh(employee)
+    await db.commit()
+    await db.refresh(employee)
 
     print(f"✅ Created employee user: {employee.username}")
     return employee
 
 
-def create_sample_assets(db: Session, creator: User) -> list[Asset]:
-    """Create sample assets."""
+async def create_sample_assets(db: AsyncSession, creator: User) -> list[Asset]:
     assets_data = [
         {
             "name": "Main Office Switch",
             "asset_type": "switch",
             "serial_number": "SW-001-2024",
             "location": "Main Office - Floor 1",
-            "description": "Cisco Catalyst 2960 - Main office network switch"
+            "description": "Cisco Catalyst 2960 - Main office network switch",
         },
         {
             "name": "Server Room Router",
             "asset_type": "router",
             "serial_number": "RT-001-2024",
             "location": "Server Room - Rack 1",
-            "description": "Cisco ISR 4000 Series Router"
+            "description": "Cisco ISR 4000 Series Router",
         },
         {
             "name": "Factory Gateway",
             "asset_type": "switch",
             "serial_number": "SW-FAC-001",
             "location": "Factory A - Control Room",
-            "description": "Industrial Ethernet Switch for factory network"
-        }
+            "description": "Industrial Ethernet Switch for factory network",
+        },
     ]
 
     assets = []
     for asset_data in assets_data:
-        # Check if already exists
-        existing = db.query(Asset).filter(
-            Asset.serial_number == asset_data["serial_number"]
-        ).first()
+        result = await db.execute(
+            select(Asset).where(Asset.serial_number == asset_data["serial_number"])
+        )
+        existing = result.scalar_one_or_none()
 
         if existing:
             print(f"Asset {asset_data['name']} already exists")
             assets.append(existing)
             continue
 
-        asset = Asset(
-            **asset_data,
-            created_by_id=creator.id
-        )
-
+        asset = Asset(**asset_data, created_by_id=creator.id)
         db.add(asset)
         assets.append(asset)
 
-    db.commit()
+    await db.commit()
 
     for asset in assets:
-        db.refresh(asset)
+        await db.refresh(asset)
         print(f"✅ Created asset: {asset.name}")
 
     return assets
 
 
-def init_database():
-    """Initialize database with sample data."""
+async def init_database():
     print("🔧 Initializing database...")
+    print("⚠️  请先确保已执行 alembic upgrade head")
 
-    # Create all tables
-    Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created")
-
-    # Create session
-    db = SessionLocal()
-
-    try:
-        # Create users
-        admin = create_admin_user(db)
-        employee = create_sample_employee(db)
-
-        # Create sample assets
-        assets = create_sample_assets(db, admin)
+    async with AsyncSessionLocal() as db:
+        admin = await create_admin_user(db)
+        await create_sample_employee(db)
+        assets = await create_sample_assets(db, admin)
 
         print("\n✅ Database initialization complete!")
         print("\n📝 Login credentials:")
@@ -143,9 +129,6 @@ def init_database():
         print("   Employee: username=employee password=employee123")
         print(f"\n📦 Created {len(assets)} sample assets")
 
-    finally:
-        db.close()
-
 
 if __name__ == "__main__":
-    init_database()
+    asyncio.run(init_database())
