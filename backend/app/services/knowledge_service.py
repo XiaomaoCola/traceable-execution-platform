@@ -54,9 +54,6 @@ import logging
 
 from sqlalchemy import select
 
-from backend.app.db.session import AsyncSessionLocal
-from backend.app.models.knowledge import KnowledgeDocument, KnowledgeChunk, DocumentStatus
-
 logger = logging.getLogger(__name__)
 
 CHUNK_SIZE = 500     # 每个切片的目标字符数
@@ -117,8 +114,14 @@ async def process_document(document_id: int, filename: str, content: bytes) -> N
 
     每个 chunk 单独调用一次 Ollama embed，chunk 数量多时耗时较长，
     这是当前实现的性能瓶颈，未来可考虑批量 embed 接口优化。
+
+    数据库相关 import 放在函数内部（延迟导入），避免模块加载时触发
+    pydantic-settings 读取环境变量，使纯函数测试（_chunk_text 等）
+    可以在没有数据库配置的环境（如 CI）中正常运行。
     """
     from langchain_ollama import OllamaEmbeddings
+    from backend.app.db.session import AsyncSessionLocal
+    from backend.app.models.knowledge import KnowledgeDocument, KnowledgeChunk, DocumentStatus
 
     embeddings = OllamaEmbeddings(
         model="nomic-embed-text",
