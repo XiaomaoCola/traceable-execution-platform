@@ -1,0 +1,61 @@
+# CI（持续集成）工作流。
+#
+# 【CI 是什么？】
+# 每次你 push 代码或者发 PR，GitHub 会自动在云端起一台干净的 Linux 机器，
+# 把你的代码拉下来，安装依赖，跑测试和格式检查。
+# 全部通过 → 绿色 ✅，有任何一个失败 → 红色 ❌，你会收到邮件提醒。
+#
+# 好处：
+#   1. 你改了 A 功能不小心破坏了 B 功能，CI 立刻告诉你
+#   2. 多人合作时，PR 没通过 CI 就不能合并，保证主分支始终可用
+#   3. 完全自动，不需要手动跑
+
+name: CI
+
+on:
+  push:
+    branches: [main]      # push 到 main 时触发
+  pull_request:
+    branches: [main]      # 发 PR 到 main 时触发
+
+jobs:
+  test:
+    name: 测试 & 代码检查
+    runs-on: ubuntu-latest    # 在 GitHub 的 Ubuntu 机器上跑
+
+    steps:
+      # 第一步：把代码拉下来
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      # 第二步：装 Python
+      - name: 安装 Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 第三步：装 Poetry（Python 的依赖管理工具）
+      - name: 安装 Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-in-project: true   # 把 .venv 放在项目目录里，方便缓存
+
+      # 第四步：缓存依赖，依赖没变就不重新装，加快 CI 速度
+      - name: 缓存依赖
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
+
+      # 第五步：安装项目依赖
+      - name: 安装依赖
+        run: poetry install --no-interaction
+
+      # 第六步：代码风格检查（ruff）
+      # ruff 会检查代码是否规范，比如有没有没用的 import、变量名是否合法等
+      - name: 代码风格检查（ruff）
+        run: poetry run ruff check backend/ tests/
+
+      # 第七步：跑单元测试
+      - name: 运行测试（pytest）
+        run: poetry run pytest tests/ -v
